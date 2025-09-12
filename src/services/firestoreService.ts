@@ -39,26 +39,28 @@ import {
 } from '@/types/firestore.types';
 
 class FirestoreService {
-  private app = getFirebaseApp();
   private db: any = null;
 
   constructor() {
-    this.initializeFirestore();
-  }
-
-  private async initializeFirestore() {
-    if (!this.db && this.app) {
-      const { getFirestore } = await import('firebase/firestore');
-      this.db = getFirestore(this.app);
-    }
-    return this.db;
+    // Don't initialize immediately - wait for proper initialization
   }
 
   private async ensureFirestore() {
     if (!this.db) {
-      await this.initializeFirestore();
+      try {
+        const { getDb } = await import('@/lib/firebase');
+        this.db = getDb();
+      } catch (error) {
+        console.error('Failed to initialize Firestore:', error);
+        throw new Error('Firestore service unavailable');
+      }
     }
     return this.db;
+  }
+
+  private async initializeFirestore() {
+    // This method is deprecated - use ensureFirestore instead
+    return this.ensureFirestore();
   }
 
   // User Profile Operations

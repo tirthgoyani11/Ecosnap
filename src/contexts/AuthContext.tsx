@@ -46,29 +46,83 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initialized: false
   });
 
+  // Check Supabase configuration
+  const supabaseConfigured = React.useMemo(() => {
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    return url && key && !url.includes('your_') && !key.includes('demo-key') && url !== 'https://demo.supabase.co';
+  }, []);
+
   // Initialize Firebase and set up auth state
   useEffect(() => {
     let isMounted = true;
 
     const initializeAuth = async () => {
       try {
-        // Initialize Firebase first with timeout
-        const initTimeout = setTimeout(() => {
-          console.warn('Firebase initialization taking too long, continuing without it...');
+        console.log('🔐 Starting auth initialization...');
+        
+        // Check if Supabase is properly configured
+        if (!supabaseConfigured) {
+          console.warn('⚠️ Supabase not configured properly - running in demo mode');
           if (isMounted) {
             setState(prev => ({ ...prev, loading: false, initialized: true }));
           }
-        }, 5000); // 5 second timeout
+          return;
+        }
 
-        await initializeFirebase();
-        await waitForFirebase();
-        clearTimeout(initTimeout);
-
-        // Get initial session
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Initialize Firebase first with timeout
+        let initTimeout: NodeJS.Timeout | null = null;
         
-        if (error) {
-          console.error('Error getting session:', error);
+        try {
+          // Set a timeout only if Firebase takes too long
+          initTimeout = setTimeout(() => {
+            console.warn('Firebase initialization taking too long, continuing without it...');
+            if (isMounted) {
+              setState(prev => ({ ...prev, loading: false, initialized: true }));
+            }
+          }, 10000); // 10 second timeout
+
+          await initializeFirebase();
+          await waitForFirebase();
+          
+          if (initTimeout) {
+            clearTimeout(initTimeout);
+            initTimeout = null;
+          }
+        } catch (firebaseError) {
+          console.error('Firebase initialization failed:', firebaseError);
+          // Continue without Firebase
+          if (initTimeout) {
+            clearTimeout(initTimeout);
+            initTimeout = null;
+          }
+        }
+
+        // Get initial session with timeout protection
+        console.log('🔑 Getting Supabase session...');
+        let sessionData, sessionError;
+        
+        try {
+          const sessionPromise = supabase.auth.getSession();
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Supabase session timeout')), 5000)
+          );
+          
+          const result = await Promise.race([sessionPromise, timeoutPromise]);
+          sessionData = (result as any)?.data;
+          sessionError = (result as any)?.error;
+        } catch (timeoutError) {
+          console.warn('⚠️ Supabase session timeout, continuing without auth:', timeoutError);
+          if (isMounted) {
+            setState(prev => ({ ...prev, loading: false, initialized: true }));
+          }
+          return;
+        }
+
+        const { session } = sessionData || {};
+        
+        if (sessionError) {
+          console.error('Error getting session:', sessionError);
           if (isMounted) {
             setState(prev => ({ ...prev, loading: false, initialized: true }));
           }
@@ -76,6 +130,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         if (session?.user && isMounted) {
+          console.log('👤 User session found, loading profile...');
           const userProfile = await loadUserProfile(session.user);
           setState(prev => ({
             ...prev,
@@ -86,6 +141,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             initialized: true
           }));
         } else if (isMounted) {
+          console.log('🚪 No user session found');
           setState(prev => ({ ...prev, loading: false, initialized: true }));
         }
       } catch (error) {

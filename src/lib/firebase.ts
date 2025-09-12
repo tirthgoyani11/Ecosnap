@@ -62,13 +62,20 @@ class FirebaseManager {
 
       // Initialize Firestore with offline persistence
       if (!this.firestore) {
-        // Always use production mode for now to avoid emulator issues
-        this.firestore = initializeFirestore(this.app, {
-          localCache: persistentLocalCache({
-            tabManager: persistentMultipleTabManager()
-          })
-        });
-        console.log('✅ Firestore initialized with offline persistence');
+        try {
+          // Try with offline persistence first
+          this.firestore = initializeFirestore(this.app, {
+            localCache: persistentLocalCache({
+              tabManager: persistentMultipleTabManager()
+            })
+          });
+          console.log('✅ Firestore initialized with offline persistence');
+        } catch (persistenceError) {
+          console.warn('⚠️  Offline persistence failed, using default Firestore:', persistenceError);
+          // Fallback to regular Firestore without persistence
+          this.firestore = getFirestore(this.app);
+          console.log('✅ Firestore initialized without persistence');
+        }
       }
 
       this.isInitialized = true;
