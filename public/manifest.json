@@ -1,0 +1,21 @@
+{
+  "name": "EcoSnap AI - Sustainable Shopping Assistant",
+  "short_name": "EcoSnap AI",
+  "description": "AI-powered platform for sustainable product discovery and environmental impact analysis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#10b981",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "utilities", "shopping"],
+  "lang": "en",
+  "scope": "/"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "eco-snap-ai",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite",
+    "dev:https": "vite --https --host",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}

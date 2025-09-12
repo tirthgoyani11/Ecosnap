@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoSnap Debug Test</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+      }
+      
+      .test-box {
+        background-color: #4CAF50;
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+      
+      .error-box {
+        background-color: #f44336;
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="test-box">
+        <h1>🌿 EcoSnap Debug Test</h1>
+        <p>If you see this, basic HTML is working!</p>
+        <p>Checking React rendering...</p>
+      </div>
+    </div>
+    
+    <script>
+      console.log('Debug: HTML loaded');
+      console.log('Debug: Root element:', document.getElementById('root'));
+      
+      // Test if we can modify the DOM
+      setTimeout(() => {
+        const root = document.getElementById('root');
+        if (root) {
+          root.innerHTML += `
+            <div class="test-box">
+              <h2>✅ DOM Manipulation Working</h2>
+              <p>Time: ${new Date().toLocaleTimeString()}</p>
+              <p>Now testing React...</p>
+            </div>
+          `;
+        }
+      }, 1000);
+    </script>
+    
+    <!-- React Test -->
+    <script type="module">
+      try {
+        console.log('Debug: Loading React modules...');
+        
+        // Import React
+        const { createRoot } = await import('react-dom/client');
+        const { createElement } = await import('react');
+        
+        console.log('Debug: React modules loaded');
+        
+        // Simple React component
+        const TestComponent = () => {
+          return createElement('div', {
+            className: 'test-box',
+            style: { backgroundColor: '#2196F3' }
+          }, [
+            createElement('h2', { key: 'title' }, '⚛️ React is Working!'),
+            createElement('p', { key: 'desc' }, 'React has successfully rendered.'),
+            createElement('p', { key: 'env1' }, `VITE_SUPABASE_URL: ${import.meta.env.VITE_SUPABASE_URL || 'Not found'}`),
+            createElement('p', { key: 'env2' }, `VITE_SUPABASE_ANON_KEY: ${import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Present' : 'Not found'}`),
+            createElement('button', { 
+              key: 'btn',
+              onClick: () => alert('React event handlers work!')
+            }, 'Test Click')
+          ]);
+        };
+        
+        // Create a new div for React content
+        const reactDiv = document.createElement('div');
+        reactDiv.id = 'react-test';
+        document.body.appendChild(reactDiv);
+        
+        const root = createRoot(reactDiv);
+        root.render(createElement(TestComponent));
+        
+        console.log('Debug: React component rendered successfully');
+        
+      } catch (error) {
+        console.error('Debug: React error:', error);
+        document.body.innerHTML += `
+          <div class="error-box">
+            <h2>❌ React Error</h2>
+            <pre>${error.message}\n\n${error.stack}</pre>
+          </div>
+        `;
+      }
+    </script>
+  </body>
+</html>

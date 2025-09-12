@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate EcoSnap AI Icon</title>
+</head>
+<body>
+    <canvas id="canvas" width="64" height="64"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Create gradient
+        const gradient = ctx.createLinearGradient(0, 0, 64, 64);
+        gradient.addColorStop(0, '#10b981');
+        gradient.addColorStop(0.5, '#14b8a6');
+        gradient.addColorStop(1, '#3b82f6');
+        
+        // Draw background circle
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(32, 32, 30, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // White border
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Draw leaf shape
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.beginPath();
+        ctx.moveTo(20, 32);
+        ctx.quadraticCurveTo(32, 16, 44, 32);
+        ctx.quadraticCurveTo(32, 48, 20, 32);
+        ctx.fill();
+        
+        // Scanner lines
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(16, 24); ctx.lineTo(48, 24);
+        ctx.moveTo(16, 40); ctx.lineTo(48, 40);
+        ctx.stroke();
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(16, 32); ctx.lineTo(48, 32);
+        ctx.stroke();
+        
+        // Small sparkles
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        [
+            [24, 20], [40, 20], [24, 44], [40, 44]
+        ].forEach(([x, y]) => {
+            ctx.beginPath();
+            ctx.arc(x, y, 1.5, 0, 2 * Math.PI);
+            ctx.fill();
+        });
+        
+        // Convert to data URL and log
+        console.log('Icon generated!');
+        console.log('Data URL:', canvas.toDataURL());
+    </script>
+</body>
+</html>
