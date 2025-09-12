@@ -42,6 +42,7 @@ import RoutingTest from "./pages/RoutingTest";
 import Developer from "./pages/Developer";
 import DemoShowcase from "./pages/DemoShowcase";
 import DataFlowTest from "@/components/DataFlowTest";
+import AIAnalysisDemo from "@/components/AIAnalysisDemo";
 import Footer from "@/components/Footer";
 
 const App = () => (
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/" element={<IndexEnhanced />} />
             <Route path="/home-original" element={<Index />} />
             <Route path="/demo" element={<DemoShowcase />} />
+            <Route path="/ai-demo" element={<AIAnalysisDemo />} />
             
             {/* Auth Routes */}
             <Route 
