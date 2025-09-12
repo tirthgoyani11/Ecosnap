@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,8 +18,19 @@ const LoginNew = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, user, session } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const from = location.state?.from?.pathname || '/dashboard';
+
+  // Handle navigation when user successfully logs in
+  useEffect(() => {
+    if (user && session) {
+      console.log('User authenticated, navigating to:', from);
+      navigate(from, { replace: true });
+    }
+  }, [user, session, navigate, from]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -37,11 +48,9 @@ const LoginNew = () => {
     
     if (error) {
       setError(error);
-    } else {
-      navigate('/dashboard');
+      setLoading(false);
     }
-    
-    setLoading(false);
+    // Don't navigate immediately - let the useEffect handle it when auth state updates
   };
 
   const handleGoogleSignIn = async () => {
@@ -52,9 +61,9 @@ const LoginNew = () => {
     
     if (error) {
       setError(error);
+      setLoading(false);
     }
-    
-    setLoading(false);
+    // Don't navigate immediately - let the useEffect handle it when auth state updates
   };
 
   return (

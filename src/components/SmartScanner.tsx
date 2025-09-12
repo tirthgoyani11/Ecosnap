@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { Camera, Upload, Scan, Zap, X, RotateCcw, Loader2, CheckCircle, AlertCircle, Leaf, Package, Cloud, FlaskConical, ShieldCheck, HeartPulse, Search, Trophy, Sparkles, BarChart3, History, Recycle, Info, Clock, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Camera, Upload, Scan, Zap, X, RotateCcw, Loader2, CheckCircle, AlertCircle, Leaf, Package, Cloud, FlaskConical, ShieldCheck, HeartPulse, Search, Trophy, Sparkles, BarChart3, History, Recycle, Info, Clock, MapPin, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,29 +17,44 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCreateScan, useProfile, useScans, useUserRank } from '@/hooks/useDatabase';
 import { useQueryClient } from '@tanstack/react-query';
 import { Gemini } from '@/integrations/gemini';
+import { SimpleScannerResult } from './SimpleScannerResult';
 
-// --- NEW DETAILED PRODUCT CARD ---
-const ProductResultCard = ({ product, onSearchAlternative }) => {
+// --- COMPACT PRODUCT CARD FOR SCANNER ---
+const CompactProductResultCard = ({ product, onViewDetails, onSearchAlternative }) => {
   if (!product) return null;
 
-  const ScoreItem = ({ icon, label, value }) => (
-    <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
-      {icon}
-      <span className="text-sm font-medium text-gray-600 mt-1">{label}</span>
-      <span className="text-lg font-bold text-gray-800">{value}/100</span>
-    </div>
-  );
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600 bg-green-100';
+    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
+    if (score >= 40) return 'text-orange-600 bg-orange-100';
+    return 'text-red-600 bg-red-100';
+  };
+
+  const getScoreDescription = (score: number) => {
+    if (score >= 80) return 'Excellent choice!';
+    if (score >= 60) return 'Good option';
+    if (score >= 40) return 'Room for improvement';
+    return 'Consider alternatives';
+  };
 
   return (
     <div className="space-y-4">
-      <Card className="w-full max-w-lg mx-auto">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold">{product.productName}</CardTitle>
-          <div className="text-md text-gray-500">
-            <span>by {product.brand} in </span>
-            <Badge variant="secondary" className="align-middle inline-flex">{product.category}</Badge>
+      <Card className="w-full max-w-lg mx-auto border-2 border-green-200 shadow-lg">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="text-xl font-bold text-gray-900">{product.productName}</CardTitle>
+              <div className="text-md text-gray-600 mt-1">
+                <span>by {product.brand || 'Unknown'} · </span>
+                <Badge variant="secondary" className="align-middle">{product.category || 'General'}</Badge>
+              </div>
+            </div>
+            <div className={`px-3 py-1 rounded-lg font-bold text-lg ${getScoreColor(product.ecoScore)}`}>
+              {product.ecoScore}/100
+            </div>
           </div>
         </CardHeader>
+        
         <CardContent className="space-y-4">
           {/* Product Image */}
           {product.imageUrl && product.imageUrl !== '/placeholder.svg' && (
@@ -46,7 +62,7 @@ const ProductResultCard = ({ product, onSearchAlternative }) => {
               <img 
                 src={product.imageUrl} 
                 alt={product.productName}
-                className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
+                className="w-24 h-24 object-cover rounded-lg border border-gray-200"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
@@ -54,77 +70,81 @@ const ProductResultCard = ({ product, onSearchAlternative }) => {
               />
             </div>
           )}
-          
-          <div className="text-center p-4 bg-green-50 rounded-xl">
-            <p className="text-sm text-green-700">Overall Eco Score</p>
-            <p className="text-6xl font-bold text-green-600">{product.ecoScore}</p>
-            <Progress value={product.ecoScore} className="mt-2" />
-          </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <ScoreItem icon={<Package size={24} className="text-blue-500" />} label="Packaging" value={product.packagingScore} />
-            <ScoreItem icon={<Cloud size={24} className="text-slate-500" />} label="Carbon" value={product.carbonScore} />
-            <ScoreItem icon={<FlaskConical size={24} className="text-purple-500" />} label="Ingredients" value={product.ingredientScore} />
-            <ScoreItem icon={<HeartPulse size={24} className="text-red-500" />} label="Health" value={product.healthScore} />
-          </div>
-
-          <div>
-            <h4 className="font-semibold mb-2">Details</h4>
-            <div className="flex flex-wrap gap-4 text-sm">
-              <Badge variant={product.recyclable ? 'default' : 'destructive'} className="align-middle inline-flex">{product.recyclable ? 'Recyclable' : 'Not Recyclable'}</Badge>
-              <Badge variant="outline" className="align-middle inline-flex">CO2 Impact: {product.co2Impact} kg</Badge>
-              <Badge variant="outline" className="align-middle inline-flex">Cert Score: {product.certificationScore}/100</Badge>
-            </div>
-          </div>
-
-          {product.certifications && product.certifications.length > 0 && (
-            <div>
-              <h4 className="font-semibold mb-2">Certifications</h4>
-              <div className="flex flex-wrap gap-2">
-                {product.certifications.map((cert: string) => <Badge key={cert} variant="secondary">{cert}</Badge>)}
+          {/* Eco Score */}
+          <div className="text-center p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+            <p className="text-sm font-medium text-green-700 mb-1">Eco Score</p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-3xl font-bold text-green-600">{product.ecoScore}</span>
+              <div className="text-left">
+                <div className="text-xs text-green-600 font-medium">/100</div>
+                <div className="text-xs text-green-500">{getScoreDescription(product.ecoScore)}</div>
               </div>
             </div>
-          )}
-
-          <div>
-            <h4 className="font-semibold mb-2">Eco Analysis</h4>
-            <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-md">{product.ecoDescription}</p>
+            <Progress value={product.ecoScore} className="mt-2 h-2" />
           </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="bg-gray-50 p-2 rounded-lg text-center">
+              <Recycle className={`mx-auto mb-1 ${product.recyclable ? 'text-green-500' : 'text-red-500'}`} size={16} />
+              <div className="font-medium">{product.recyclable ? 'Recyclable' : 'Not Recyclable'}</div>
+            </div>
+            <div className="bg-gray-50 p-2 rounded-lg text-center">
+              <Cloud className="text-blue-500 mx-auto mb-1" size={16} />
+              <div className="font-medium">{product.co2Impact || 'N/A'} kg CO₂</div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Button
+              onClick={onViewDetails}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              View Details
+            </Button>
+            {product.alternatives && product.alternatives.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => onSearchAlternative(product.alternatives[0].product_name)}
+                className="border-green-300 text-green-700 hover:bg-green-50"
+              >
+                <Leaf className="w-4 h-4 mr-1" />
+                Alternative
+              </Button>
+            )}
+          </div>
+
+          {/* Eco Description Preview */}
+          {product.ecoDescription && (
+            <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded-md line-clamp-2">
+              {product.ecoDescription.slice(0, 120)}...
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Alternatives Section */}
+      {/* Alternatives Preview */}
       {product.alternatives && product.alternatives.length > 0 && (
-        <Card className="w-full max-w-lg mx-auto">
-          <CardHeader>
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <Leaf className="text-green-500" size={20} />
-              Eco-Friendly Alternatives
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {product.alternatives.map((alt, index) => (
-                <div key={index} className="p-3 bg-green-50 rounded-lg border border-green-100">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-green-800">{alt.product_name}</h4>
-                      <p className="text-sm text-green-600 mt-1">{alt.reasoning}</p>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="mt-2 text-green-600 border-green-200 hover:bg-green-50"
-                        onClick={() => onSearchAlternative(alt.product_name)}
-                      >
-                        Search This Product
-                      </Button>
-                    </div>
-                    <Badge variant="outline" className="text-green-600 border-green-200">
-                      Better Choice
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+        <Card className="w-full max-w-lg mx-auto border border-green-200">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Leaf className="text-green-500" size={16} />
+                <span className="text-sm font-medium text-green-700">
+                  {product.alternatives.length} Better Alternative{product.alternatives.length > 1 ? 's' : ''} Found
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onViewDetails}
+                className="text-green-600 hover:text-green-700 text-xs"
+              >
+                See All
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -137,6 +157,7 @@ const ProductResultCard = ({ product, onSearchAlternative }) => {
 // --- MAIN SCANNER COMPONENT ---
 
 export const SmartScanner: React.FC = () => {
+  const navigate = useNavigate();
   const [scanMode, setScanMode] = useState<'camera' | 'upload' | 'barcode'>('camera');
   const [isScanning, setIsScanning] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -156,13 +177,13 @@ export const SmartScanner: React.FC = () => {
 
   // Handle searching for alternative products
   const handleSearchAlternative = useCallback((productName: string) => {
-    setBarcodeInput(productName);
-    setScanMode('barcode');
-    setProductResult(null); // Clear current result
-    clearSearch();
-  }, [clearSearch]);
+    // Navigate to discover page with search parameter
+    navigate(`/discover?search=${encodeURIComponent(productName)}`);
+  }, [navigate]);
 
   const [productResult, setProductResult] = useState<any | null>(null);
+  const [showEnhancedResult, setShowEnhancedResult] = useState(false);
+  const [popupProduct, setPopupProduct] = useState<any | null>(null);
 
   useEffect(() => {
     if (scanMode !== 'camera') return;
@@ -1413,7 +1434,14 @@ export const SmartScanner: React.FC = () => {
               </p>
             </div>
             
-            <ProductResultCard product={productResult} onSearchAlternative={handleSearchAlternative} />
+            <CompactProductResultCard 
+              product={productResult} 
+              onViewDetails={() => {
+                setPopupProduct(productResult);
+                setShowEnhancedResult(true);
+              }}
+              onSearchAlternative={handleSearchAlternative} 
+            />
             
             <div className="text-center mt-8 space-y-4">
               <Button
@@ -1448,7 +1476,7 @@ export const SmartScanner: React.FC = () => {
               </h2>
             </div>
             
-            <ProductResultCard 
+            <CompactProductResultCard 
               product={{
                 productName: products[0]?.name,
                 brand: products[0]?.brand || 'Unknown',
@@ -1465,6 +1493,26 @@ export const SmartScanner: React.FC = () => {
                 ecoDescription: products[0]?.description || '',
                 alternatives: (products[0]?.alternatives || []).map((a:any) => ({ product_name: a.name, reasoning: a.description }))
               }} 
+              onViewDetails={() => {
+                const searchProduct = {
+                  productName: products[0]?.name,
+                  brand: products[0]?.brand || 'Unknown',
+                  category: products[0]?.category || 'general',
+                  ecoScore: products[0]?.ecoScore ?? 0,
+                  packagingScore: 55,
+                  carbonScore: 55,
+                  ingredientScore: 55,
+                  certificationScore: 50,
+                  recyclable: false,
+                  co2Impact: -1,
+                  healthScore: 50,
+                  certifications: [],
+                  ecoDescription: products[0]?.description || '',
+                  alternatives: (products[0]?.alternatives || []).map((a:any) => ({ product_name: a.name, reasoning: a.description }))
+                };
+                setPopupProduct(searchProduct);
+                setShowEnhancedResult(true);
+              }}
               onSearchAlternative={handleSearchAlternative} 
             />
           </CardContent>
@@ -1473,6 +1521,23 @@ export const SmartScanner: React.FC = () => {
 
       {/* Hidden canvas for image capture */}
       <canvas ref={canvasRef} className="hidden" />
+
+      {/* Enhanced Scanner Result Popup */}
+      <SimpleScannerResult
+        product={popupProduct}
+        isOpen={showEnhancedResult}
+        onClose={() => {
+          setShowEnhancedResult(false);
+          setPopupProduct(null);
+        }}
+        onSearchAlternative={handleSearchAlternative}
+        onSaveResult={(product) => {
+          // Handle saving the result if needed
+          console.log('Saving product result:', product);
+          setShowEnhancedResult(false);
+          setPopupProduct(null);
+        }}
+      />
 
           </div>
 

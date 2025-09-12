@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -449,6 +450,7 @@ Return ONLY valid JSON, no explanations.`;
 
 export default function SuperDiscoverPage() {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   
   // State Management
   const [searchQuery, setSearchQuery] = useState('');
@@ -586,6 +588,14 @@ export default function SuperDiscoverPage() {
 
     generateInitialProducts();
   }, []);
+
+  // Handle URL search parameters
+  useEffect(() => {
+    const searchTerm = searchParams.get('search');
+    if (searchTerm) {
+      setSearchQuery(searchTerm);
+    }
+  }, [searchParams]);
 
   // Real-time updates simulation
   useEffect(() => {

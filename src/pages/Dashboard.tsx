@@ -248,6 +248,14 @@ export default function Dashboard() {
   const { data: userRank, isLoading: rankLoading, error: rankError, refetch: refetchRank } = useUserRank();
   const { dailyTip } = useEcoTips();
 
+  // Add function to global scope for testing achievement popup
+  React.useEffect(() => {
+    (window as any).clearShownAchievements = () => {
+      localStorage.removeItem('shownAchievements');
+      console.log('🎯 Cleared shown achievements - refresh page to test achievement popup');
+    };
+  }, []);
+
   // State management
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -466,14 +474,29 @@ export default function Dashboard() {
     }
   }, [recentScans, historyFilter]);
 
-  // Show celebration for achievements
+  // Show celebration for new achievements only
   useEffect(() => {
-    if (stats.achievements.length > 0 && !showCelebration) {
-      setShowCelebration(true);
-      const timer = setTimeout(() => setShowCelebration(false), 3000);
-      return () => clearTimeout(timer);
+    if (stats.achievements.length > 0) {
+      // Get previously shown achievements from localStorage
+      const shownAchievements = JSON.parse(localStorage.getItem('shownAchievements') || '[]');
+      
+      // Find new achievements that haven't been shown
+      const newAchievements = stats.achievements.filter(achievement => 
+        !shownAchievements.includes(achievement)
+      );
+      
+      // Only show celebration if there are new achievements
+      if (newAchievements.length > 0 && !showCelebration) {
+        setShowCelebration(true);
+        
+        // Store all current achievements as shown
+        localStorage.setItem('shownAchievements', JSON.stringify(stats.achievements));
+        
+        const timer = setTimeout(() => setShowCelebration(false), 3000);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [stats.achievements.length]);
+  }, [stats.achievements.join(',')]); // Use join to properly compare array contents
 
   if (loading || profileLoading) {
     return (
