@@ -17,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCreateScan, useProfile, useScans, useUserRank } from '@/hooks/useDatabase';
 import { useQueryClient } from '@tanstack/react-query';
 import { Gemini } from '@/integrations/gemini';
-import { SimpleScannerResult } from './SimpleScannerResult';
+import { ProductDataEnrichment } from '@/lib/enhanced-product-enrichment';
 
 // --- COMPACT PRODUCT CARD FOR SCANNER ---
 const CompactProductResultCard = ({ product, onViewDetails, onSearchAlternative }) => {
@@ -181,9 +181,22 @@ export const SmartScanner: React.FC = () => {
     navigate(`/discover?search=${encodeURIComponent(productName)}`);
   }, [navigate]);
 
+  // Helper function to auto-navigate to product details after scan
+  const handleScanResult = useCallback((productData: any) => {
+    // Set the result briefly for any UI state that depends on it
+    setProductResult(productData);
+    
+    // Store enhanced product data for the product details page
+    const productKey = `product_${encodeURIComponent(productData.productName)}`;
+    sessionStorage.setItem(productKey, JSON.stringify(productData));
+    
+    // Auto-navigate to product details page
+    setTimeout(() => {
+      navigate(`/product/${encodeURIComponent(productData.productName)}`);
+    }, 100); // Small delay to ensure state is set
+  }, [navigate]);
+
   const [productResult, setProductResult] = useState<any | null>(null);
-  const [showEnhancedResult, setShowEnhancedResult] = useState(false);
-  const [popupProduct, setPopupProduct] = useState<any | null>(null);
 
   useEffect(() => {
     if (scanMode !== 'camera') return;
@@ -298,67 +311,120 @@ export const SmartScanner: React.FC = () => {
 
   const analyzeFile = async (file: File) => {
     try {
-      console.log('🔍 Starting AI analysis of captured image...');
+      console.log('🔍 Starting enhanced analysis of captured camera image...');
       
-      const results = await searchByImageFile(file);
-      if (results.length > 0) {
-        const product = results[0];
-        console.log('🤖 AI Analysis Results:', product);
+      // Convert file to base64 for analysis
+      const reader = new FileReader();
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // First get initial analysis from searchByImageFile to extract product name
+      const aiResults = await searchByImageFile(file);
+      let productName = 'Unknown Product';
+      
+      if (aiResults.length > 0) {
+        productName = aiResults[0].name || 'Unknown Product';
+        console.log('🔍 Initial AI detection:', productName);
+      }
+      
+      // Use our enhanced product enrichment service with image data
+      const enrichedProduct = await ProductDataEnrichment.enrichProductData(
+        productName,
+        undefined, // No barcode from camera
+        base64Data
+      );
+      
+      if (enrichedProduct) {
+        console.log('✅ Enhanced camera scan successful:', enrichedProduct.productName);
+        console.log(`📊 Data confidence: ${enrichedProduct.confidence}% from sources:`, enrichedProduct.dataSources);
         
-        // Create product data directly from AI results (no Gemini enrichment)
+        // Convert enriched data to the format expected by handleScanResult
         const productData = {
-          productName: product.name || 'Unknown Product',
-          brand: product.brand || 'Unknown Brand',
-          category: product.category || 'general',
-          ecoScore: product.ecoScore ?? Math.floor(Math.random() * 40) + 60, // 60-100 range
-          packagingScore: Math.floor(Math.random() * 30) + 50,
-          carbonScore: Math.floor(Math.random() * 40) + 40,
-          ingredientScore: Math.floor(Math.random() * 30) + 60,
-          certificationScore: Math.floor(Math.random() * 50) + 30,
-          recyclable: Math.random() > 0.5,
-          co2Impact: Math.random() * 3 + 0.5, // 0.5-3.5 kg CO2
-          healthScore: Math.floor(Math.random() * 40) + 50,
-          certifications: [],
-          ecoDescription: `Eco-friendly analysis for ${product.name || 'this product'}`,
-          alternatives: (product.alternatives || []).map((a:any) => ({ 
-            product_name: a.name, 
-            reasoning: a.description 
+          productName: enrichedProduct.productName,
+          brand: enrichedProduct.brand,
+          category: enrichedProduct.category,
+          ecoScore: enrichedProduct.ecoScore,
+          packagingScore: enrichedProduct.packagingScore,
+          carbonScore: enrichedProduct.carbonScore,
+          ingredientScore: enrichedProduct.materialScore,
+          certificationScore: 0,
+          recyclable: enrichedProduct.recyclable,
+          co2Impact: enrichedProduct.co2Impact,
+          healthScore: enrichedProduct.healthScore,
+          certifications: enrichedProduct.certifications,
+          ecoDescription: enrichedProduct.description,
+          alternatives: enrichedProduct.alternatives.map(alt => ({
+            product_name: alt.name,
+            reasoning: alt.whyBetter.join('. ')
           })),
-          imageUrl: product.imageUrl || '/placeholder.svg'
+          imageUrl: enrichedProduct.imageUrl, // Use real product image
+          // Enhanced fields
+          barcode: enrichedProduct.barcode,
+          sustainabilityGrade: enrichedProduct.sustainabilityGrade,
+          materials: enrichedProduct.materials,
+          packaging: enrichedProduct.packaging,
+          originCountry: enrichedProduct.originCountry,
+          price: enrichedProduct.price,
+          availability: enrichedProduct.availability,
+          marketRating: enrichedProduct.marketRating,
+          totalReviews: enrichedProduct.totalReviews,
+          imageGallery: enrichedProduct.imageGallery,
+          dataSources: enrichedProduct.dataSources,
+          confidence: enrichedProduct.confidence
         };
 
-        console.log('💾 Saving scan data:', {
+        console.log('💾 Saving enhanced camera scan data:', {
           name: productData.productName,
           score: productData.ecoScore,
-          co2: productData.co2Impact
+          co2: productData.co2Impact,
+          confidence: enrichedProduct.confidence
         });
 
-        setProductResult(productData);
+        handleScanResult(productData);
         
-        // Save scan data to database with proper schema alignment
+        // Save enhanced scan data to database
         try {
-          console.log('💾 Saving scan data to database...');
+          console.log('💾 Saving enhanced camera scan to database...');
           
           const scanResult = await createScanMutation.mutateAsync({
-            detected_name: productData.productName,
+            detected_name: enrichedProduct.productName,
             scan_type: 'camera',
-            eco_score: productData.ecoScore,
-            co2_footprint: productData.co2Impact,
+            eco_score: enrichedProduct.ecoScore,
+            co2_footprint: enrichedProduct.co2Impact,
             image_url: null, // Don't store image per policy
-            metadata: { 
-              brand: productData.brand,
-              category: productData.category,
-              certifications: productData.certifications,
-              recyclable: productData.recyclable,
-              health_score: productData.healthScore,
-              packaging_score: productData.packagingScore,
-              carbon_score: productData.carbonScore,
-              ingredient_score: productData.ingredientScore
+            alternatives_count: enrichedProduct.alternatives?.length || 0,
+            enriched_data: {
+              source: 'mixed' as const,
+              confidence_score: enrichedProduct.confidence || 0.85,
+              data_sources: enrichedProduct.dataSources || ['gemini', 'openfoodfacts'],
+              image_source: 'unsplash' as const,
+              image_confidence: 0.9,
+              alternatives_source: 'mixed' as const,
+              barcode: enrichedProduct.barcode,
+              brand: enrichedProduct.brand,
+              category: enrichedProduct.category,
+              ingredients: enrichedProduct.ingredients,
+              certifications: enrichedProduct.certifications,
+              packaging_score: enrichedProduct.packagingScore,
+              carbon_score: enrichedProduct.carbonScore,
+              material_score: enrichedProduct.materialScore,
+              health_score: enrichedProduct.healthScore,
+              recyclable: enrichedProduct.recyclable,
+              organic: enrichedProduct.organic,
+              fair_trade: enrichedProduct.fairTrade,
+              carbon_neutral: enrichedProduct.carbonNeutral,
             },
-            alternatives_count: productData.alternatives?.length || 0
+            metadata: { 
+              source: 'enhanced_camera_scan',
+              timestamp: new Date().toISOString(),
+              original_ai_detection: productName
+            }
           });
           
-          console.log('✅ Scan saved successfully:', scanResult.id);
+          console.log('✅ Enhanced camera scan saved successfully:', scanResult.id);
           
           // Force refresh all relevant queries immediately
           await Promise.all([
@@ -378,13 +444,13 @@ export const SmartScanner: React.FC = () => {
           console.log('🔄 Queries refreshed - dashboard should update now!');
           
           toast({
-            title: "🎉 Scan Saved!",
-            description: `${productData.productName} - Eco Score: ${productData.ecoScore}/100 - Check your dashboard!`,
+            title: "🎉 Enhanced Scan Complete!",
+            description: `${enrichedProduct.productName} - Eco Score: ${enrichedProduct.ecoScore}/100 (${enrichedProduct.confidence}% confidence)`,
             duration: 4000,
           });
           
         } catch (error) {
-          console.error('❌ Failed to save scan:', error);
+          console.error('❌ Failed to save enhanced camera scan:', error);
           toast({
             title: "⚠️ Analysis Complete",
             description: "Results shown but couldn't save to history",
@@ -394,7 +460,7 @@ export const SmartScanner: React.FC = () => {
         }
         
       } else {
-        console.log('❌ No AI analysis results');
+        console.log('❌ No enhanced analysis results');
         toast({
           title: "No Results",
           description: "Could not analyze the image. Try a clearer photo of the product.",
@@ -402,7 +468,7 @@ export const SmartScanner: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('❌ Analysis error:', error);
+      console.error('❌ Enhanced camera analysis error:', error);
       toast({
         title: "Analysis Failed",
         description: "Failed to analyze image. Please try again.",
@@ -558,7 +624,7 @@ export const SmartScanner: React.FC = () => {
           imageUrl: '/placeholder.svg'
         };
         
-        setProductResult(productData);
+        handleScanResult(productData);
         clearSearch();
 
         // Save search result to database
@@ -571,14 +637,28 @@ export const SmartScanner: React.FC = () => {
             eco_score: productData.ecoScore,
             co2_footprint: productData.co2Impact,
             image_url: null,
-            metadata: { 
-              source: 'gemini_text_search',
+            alternatives_count: productData.alternatives?.length || 0,
+            enriched_data: {
+              source: 'gemini' as const,
+              confidence_score: geminiResult.confidence || 0.75,
+              data_sources: ['gemini'],
+              image_source: 'fallback' as const,
+              alternatives_source: 'ai_generated' as const,
               brand: productData.brand,
               category: productData.category,
-              search_query: barcodeInput.trim(),
-              confidence: geminiResult.confidence
+              packaging_score: productData.packagingScore,
+              carbon_score: productData.carbonScore,
+              health_score: productData.healthScore,
+              recyclable: productData.recyclable,
+              organic: false,
+              fair_trade: false,
+              carbon_neutral: false,
             },
-            alternatives_count: productData.alternatives?.length || 0
+            metadata: { 
+              source: 'gemini_text_search',
+              search_query: barcodeInput.trim(),
+              timestamp: new Date().toISOString()
+            }
           });
           
           console.log('✅ Text search result saved successfully:', scanResult.id);
@@ -635,40 +715,96 @@ export const SmartScanner: React.FC = () => {
     }
 
     try {
-      console.log('🔍 Starting search for:', barcodeInput.trim());
+      console.log('🔍 Starting enhanced search for:', barcodeInput.trim());
       
       // Check if input looks like a barcode (mostly numbers)
       const isBarcode = /^\d{8,}$/.test(barcodeInput.trim());
       
-      const result = isBarcode 
-        ? await lookupBarcode(barcodeInput.trim())
-        : await lookupProductName(barcodeInput.trim());
+      // Use our enhanced product enrichment service
+      const enrichedProduct = isBarcode 
+        ? await ProductDataEnrichment.enrichProductData(barcodeInput.trim(), barcodeInput.trim())
+        : await ProductDataEnrichment.enrichProductData(barcodeInput.trim());
         
-      if (result.success && result.product) {
-        console.log('✅ Search successful:', result.product.productName);
+      if (enrichedProduct) {
+        console.log('✅ Product enrichment successful:', enrichedProduct.productName);
+        console.log(`📊 Data confidence: ${enrichedProduct.confidence}% from sources:`, enrichedProduct.dataSources);
         
-        // Show enriched product from Gemini AI (NO image storage)
-        setProductResult(result.product);
+        // Convert enriched data to the format expected by handleScanResult
+        const productForNavigation = {
+          productName: enrichedProduct.productName,
+          brand: enrichedProduct.brand,
+          category: enrichedProduct.category,
+          ecoScore: enrichedProduct.ecoScore,
+          packagingScore: enrichedProduct.packagingScore,
+          carbonScore: enrichedProduct.carbonScore,
+          ingredientScore: enrichedProduct.materialScore,
+          certificationScore: 0, // Add if needed
+          recyclable: enrichedProduct.recyclable,
+          co2Impact: enrichedProduct.co2Impact,
+          healthScore: enrichedProduct.healthScore,
+          certifications: enrichedProduct.certifications,
+          ecoDescription: enrichedProduct.description,
+          alternatives: enrichedProduct.alternatives.map(alt => ({
+            product_name: alt.name,
+            reasoning: alt.whyBetter.join('. ')
+          })),
+          imageUrl: enrichedProduct.imageUrl,
+          // Enhanced fields for product details page
+          barcode: enrichedProduct.barcode,
+          sustainabilityGrade: enrichedProduct.sustainabilityGrade,
+          materials: enrichedProduct.materials,
+          packaging: enrichedProduct.packaging,
+          originCountry: enrichedProduct.originCountry,
+          price: enrichedProduct.price,
+          availability: enrichedProduct.availability,
+          marketRating: enrichedProduct.marketRating,
+          totalReviews: enrichedProduct.totalReviews,
+          imageGallery: enrichedProduct.imageGallery,
+          dataSources: enrichedProduct.dataSources,
+          confidence: enrichedProduct.confidence
+        };
+        
+        // Show enriched product from real data sources
+        handleScanResult(productForNavigation);
         clearSearch();
 
-        // Save search result to database (NO image storage)
+        // Save enriched result to database
         try {
-          console.log('💾 Saving search result to database...');
+          console.log('💾 Saving enriched search result to database...');
           
           const scanResult = await createScanMutation.mutateAsync({
-            detected_name: result.product.productName,
+            detected_name: enrichedProduct.productName,
             scan_type: isBarcode ? 'barcode' : 'upload',
-            eco_score: result.product.ecoScore,
-            co2_footprint: result.product.co2Impact > 0 ? result.product.co2Impact : undefined,
+            eco_score: enrichedProduct.ecoScore,
+            co2_footprint: enrichedProduct.co2Impact > 0 ? enrichedProduct.co2Impact : undefined,
             image_url: null, // Don't store image
-            metadata: { 
-              source: 'gemini_ai',
-              brand: result.product.brand, 
-              category: result.product.category,
-              search_query: barcodeInput.trim(),
-              search_type: isBarcode ? 'barcode' : 'text'
+            alternatives_count: enrichedProduct.alternatives?.length || 0,
+            enriched_data: {
+              source: 'mixed' as const,
+              confidence_score: enrichedProduct.confidence || 0.85,
+              data_sources: enrichedProduct.dataSources || ['openfoodfacts'],
+              image_source: enrichedProduct.imageUrl?.includes('unsplash') ? 'unsplash' as const : 'fallback' as const,
+              alternatives_source: 'mixed' as const,
+              barcode: isBarcode ? barcodeInput.trim() : enrichedProduct.barcode,
+              brand: enrichedProduct.brand,
+              category: enrichedProduct.category,
+              ingredients: enrichedProduct.ingredients,
+              certifications: enrichedProduct.certifications,
+              packaging_score: enrichedProduct.packagingScore,
+              carbon_score: enrichedProduct.carbonScore,
+              material_score: enrichedProduct.materialScore,
+              health_score: enrichedProduct.healthScore,
+              recyclable: enrichedProduct.recyclable,
+              organic: enrichedProduct.organic,
+              fair_trade: enrichedProduct.fairTrade,
+              carbon_neutral: enrichedProduct.carbonNeutral,
             },
-            alternatives_count: result.product.alternatives?.length || 0
+            metadata: { 
+              source: 'enhanced_enrichment',
+              search_query: barcodeInput.trim(),
+              search_type: isBarcode ? 'barcode' : 'text',
+              timestamp: new Date().toISOString()
+            }
           });
           
           console.log('✅ Search result saved successfully:', scanResult);
@@ -691,15 +827,15 @@ export const SmartScanner: React.FC = () => {
           console.log('🔄 Queries refreshed - dashboard should update now!');
           
           toast({
-            title: `✅ Found & Saved: ${result.product.productName}`,
-            description: `Brand: ${result.product.brand} | Eco Score: ${result.product.ecoScore}/100 - Check dashboard!`,
+            title: `✅ Found & Saved: ${enrichedProduct.productName}`,
+            description: `Brand: ${enrichedProduct.brand} | Eco Score: ${enrichedProduct.ecoScore}/100 - Check dashboard!`,
             duration: 4000,
           });
           
         } catch (error) {
           console.error('❌ Failed to save search result:', error);
           toast({
-            title: `✅ Found: ${result.product.productName}`,
+            title: `✅ Found: ${enrichedProduct.productName}`,
             description: "Results shown but couldn't save to history",
             duration: 4000,
           });
@@ -726,9 +862,9 @@ export const SmartScanner: React.FC = () => {
   // New function for analyzing uploaded files using Gemini API
   const handleGeminiFileUpload = useCallback(async (file: File) => {
     try {
-      console.log('🔍 Starting Gemini AI analysis of uploaded image...');
+      console.log('🔍 Starting enhanced analysis of uploaded image...');
       
-      // Convert file to base64 for Gemini API
+      // Convert file to base64 for analysis
       const reader = new FileReader();
       const base64Data = await new Promise<string>((resolve, reject) => {
         reader.onload = () => resolve(reader.result as string);
@@ -736,64 +872,108 @@ export const SmartScanner: React.FC = () => {
         reader.readAsDataURL(file);
       });
 
-      console.log('📸 Image converted to base64, calling Gemini API...');
+      console.log('📸 Image converted, starting enhanced product enrichment...');
       
-      // Use Gemini API for image analysis
+      // First get initial analysis from Gemini to extract product name
       const geminiResult = await Gemini.analyzeImage(base64Data, false);
+      const productName = geminiResult?.product_name || 'Unknown Product';
       
-      if (geminiResult) {
-        console.log('🤖 Gemini Analysis Results:', geminiResult);
+      console.log('🔍 Extracted product name:', productName);
+      
+      // Use our enhanced product enrichment service with image data
+      const enrichedProduct = await ProductDataEnrichment.enrichProductData(
+        productName,
+        undefined, // No barcode from image
+        base64Data
+      );
+      
+      if (enrichedProduct) {
+        console.log('✅ Enhanced product enrichment successful:', enrichedProduct.productName);
+        console.log(`📊 Data confidence: ${enrichedProduct.confidence}% from sources:`, enrichedProduct.dataSources);
         
-        // Create product data from Gemini results
+        // Convert enriched data to the format expected by handleScanResult
         const productData = {
-          productName: geminiResult.product_name || 'Unknown Product',
-          brand: geminiResult.brand || 'Unknown Brand',
-          category: geminiResult.category || 'general',
-          ecoScore: geminiResult.eco_score ?? Math.floor(Math.random() * 40) + 60,
-          packagingScore: Math.floor(Math.random() * 30) + 50,
-          carbonScore: Math.floor(Math.random() * 40) + 40,
-          ingredientScore: Math.floor(Math.random() * 30) + 60,
-          certificationScore: Math.floor(Math.random() * 50) + 30,
-          recyclable: Math.random() > 0.5,
-          co2Impact: Math.random() * 3 + 0.5,
-          healthScore: Math.floor(Math.random() * 40) + 50,
-          certifications: [],
-          ecoDescription: geminiResult.reasoning || `Eco-friendly analysis for ${geminiResult.product_name}`,
-          alternatives: (geminiResult.alternatives || []).map((a:any) => ({ 
-            product_name: a.product_name, 
-            reasoning: a.reasoning 
+          productName: enrichedProduct.productName,
+          brand: enrichedProduct.brand,
+          category: enrichedProduct.category,
+          ecoScore: enrichedProduct.ecoScore,
+          packagingScore: enrichedProduct.packagingScore,
+          carbonScore: enrichedProduct.carbonScore,
+          ingredientScore: enrichedProduct.materialScore,
+          certificationScore: 0,
+          recyclable: enrichedProduct.recyclable,
+          co2Impact: enrichedProduct.co2Impact,
+          healthScore: enrichedProduct.healthScore,
+          certifications: enrichedProduct.certifications,
+          ecoDescription: enrichedProduct.description,
+          alternatives: enrichedProduct.alternatives.map(alt => ({
+            product_name: alt.name,
+            reasoning: alt.whyBetter.join('. ')
           })),
-          imageUrl: base64Data
+          imageUrl: enrichedProduct.imageUrl, // Use real product image instead of uploaded image
+          // Enhanced fields
+          barcode: enrichedProduct.barcode,
+          sustainabilityGrade: enrichedProduct.sustainabilityGrade,
+          materials: enrichedProduct.materials,
+          packaging: enrichedProduct.packaging,
+          originCountry: enrichedProduct.originCountry,
+          price: enrichedProduct.price,
+          availability: enrichedProduct.availability,
+          marketRating: enrichedProduct.marketRating,
+          totalReviews: enrichedProduct.totalReviews,
+          imageGallery: enrichedProduct.imageGallery,
+          dataSources: enrichedProduct.dataSources,
+          confidence: enrichedProduct.confidence
         };
 
-        console.log('💾 Saving uploaded image scan data:', {
+        console.log('💾 Saving enhanced upload scan data:', {
           name: productData.productName,
           score: productData.ecoScore,
-          co2: productData.co2Impact
+          co2: productData.co2Impact,
+          confidence: enrichedProduct.confidence
         });
 
-        setProductResult(productData);
+        handleScanResult(productData);
         
-        // Save scan data to database
+        // Save enhanced scan data to database
         try {
-          console.log('💾 Saving uploaded image scan to database...');
+          console.log('💾 Saving enhanced upload scan to database...');
           
           const scanResult = await createScanMutation.mutateAsync({
-            detected_name: productData.productName,
+            detected_name: enrichedProduct.productName,
             scan_type: 'upload',
-            eco_score: productData.ecoScore,
-            co2_footprint: productData.co2Impact,
+            eco_score: enrichedProduct.ecoScore,
+            co2_footprint: enrichedProduct.co2Impact,
             image_url: null, // Don't store image per policy
-            metadata: { 
-              source: 'gemini_image_upload',
-              brand: productData.brand,
-              category: productData.category,
-              confidence: geminiResult.confidence
+            alternatives_count: enrichedProduct.alternatives?.length || 0,
+            enriched_data: {
+              source: 'mixed' as const,
+              confidence_score: enrichedProduct.confidence || 0.85,
+              data_sources: enrichedProduct.dataSources || ['gemini', 'openfoodfacts'],
+              image_source: 'unsplash' as const,
+              alternatives_source: 'mixed' as const,
+              barcode: enrichedProduct.barcode,
+              brand: enrichedProduct.brand,
+              category: enrichedProduct.category,
+              ingredients: enrichedProduct.ingredients,
+              certifications: enrichedProduct.certifications,
+              packaging_score: enrichedProduct.packagingScore,
+              carbon_score: enrichedProduct.carbonScore,
+              material_score: enrichedProduct.materialScore,
+              health_score: enrichedProduct.healthScore,
+              recyclable: enrichedProduct.recyclable,
+              organic: enrichedProduct.organic,
+              fair_trade: enrichedProduct.fairTrade,
+              carbon_neutral: enrichedProduct.carbonNeutral,
             },
-            alternatives_count: productData.alternatives?.length || 0
+            metadata: { 
+              source: 'enhanced_image_upload',
+              timestamp: new Date().toISOString(),
+              original_product_detected: productName
+            }
           });
           
-          console.log('✅ Upload scan saved successfully:', scanResult.id);
+          console.log('✅ Enhanced upload scan saved successfully:', scanResult.id);
           
           // Force refresh queries
           await Promise.all([
@@ -804,13 +984,13 @@ export const SmartScanner: React.FC = () => {
           ]);
           
           toast({
-            title: "🎉 Upload Analysis Complete!",
-            description: `${productData.productName} - Eco Score: ${productData.ecoScore}/100`,
+            title: "🎉 Enhanced Analysis Complete!",
+            description: `${enrichedProduct.productName} - Eco Score: ${enrichedProduct.ecoScore}/100 (${enrichedProduct.confidence}% confidence)`,
             duration: 4000,
           });
           
         } catch (error) {
-          console.error('❌ Failed to save upload scan:', error);
+          console.error('❌ Failed to save enhanced upload scan:', error);
           toast({
             title: "⚠️ Analysis Complete",
             description: "Results shown but couldn't save to history",
@@ -820,7 +1000,7 @@ export const SmartScanner: React.FC = () => {
         }
         
       } else {
-        console.log('❌ No Gemini analysis results for uploaded image');
+        console.log('❌ No enriched analysis results for uploaded image');
         toast({
           title: "Analysis Failed",
           description: "Could not analyze the uploaded image. Try a clearer photo of the product.",
@@ -828,7 +1008,7 @@ export const SmartScanner: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('❌ Upload analysis error:', error);
+      console.error('❌ Enhanced upload analysis error:', error);
       toast({
         title: "Upload Analysis Failed",
         description: "Failed to analyze uploaded image. Please try again.",
@@ -1437,8 +1617,7 @@ export const SmartScanner: React.FC = () => {
             <CompactProductResultCard 
               product={productResult} 
               onViewDetails={() => {
-                setPopupProduct(productResult);
-                setShowEnhancedResult(true);
+                navigate(`/product/${encodeURIComponent(productResult.productName)}`);
               }}
               onSearchAlternative={handleSearchAlternative} 
             />
@@ -1510,8 +1689,7 @@ export const SmartScanner: React.FC = () => {
                   ecoDescription: products[0]?.description || '',
                   alternatives: (products[0]?.alternatives || []).map((a:any) => ({ product_name: a.name, reasoning: a.description }))
                 };
-                setPopupProduct(searchProduct);
-                setShowEnhancedResult(true);
+                navigate(`/product/${encodeURIComponent(searchProduct.productName)}`);
               }}
               onSearchAlternative={handleSearchAlternative} 
             />
@@ -1521,23 +1699,6 @@ export const SmartScanner: React.FC = () => {
 
       {/* Hidden canvas for image capture */}
       <canvas ref={canvasRef} className="hidden" />
-
-      {/* Enhanced Scanner Result Popup */}
-      <SimpleScannerResult
-        product={popupProduct}
-        isOpen={showEnhancedResult}
-        onClose={() => {
-          setShowEnhancedResult(false);
-          setPopupProduct(null);
-        }}
-        onSearchAlternative={handleSearchAlternative}
-        onSaveResult={(product) => {
-          // Handle saving the result if needed
-          console.log('Saving product result:', product);
-          setShowEnhancedResult(false);
-          setPopupProduct(null);
-        }}
-      />
 
           </div>
 

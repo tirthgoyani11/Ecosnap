@@ -22,6 +22,7 @@ import IndexEnhanced from "./pages/IndexEnhanced";
 import LoginNew from "./pages/LoginNew";
 import SignUpNew from "./pages/SignUpNew";
 import { SmartScanner } from "../src/components/SmartScanner";
+import { ProductDetailsPage } from "../src/components/ProductDetailsPage";
 import Dashboard from './pages/Dashboard';
 import BulkScan from "./pages/BulkScan";
 import SuperDiscover from "./pages/SuperDiscover";
@@ -29,7 +30,7 @@ import DiscoverNewEnhanced from "./pages/DiscoverNewEnhanced";
 import Leaderboard from "./pages/Leaderboard";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-import Footer from "@/components/Footer";
+import Footer from "./components/Footer";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -67,6 +68,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <SmartScanner />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/product/:productId" 
+              element={
+                <ProtectedRoute>
+                  <ProductDetailsPage />
                 </ProtectedRoute>
               } 
             />

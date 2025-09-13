@@ -208,6 +208,29 @@ export const useCreateScan = () => {
       metadata?: any;
       product_id?: string;
       alternatives_count?: number;
+      // Enhanced API data fields
+      enriched_data?: {
+        source: 'openfoodfacts' | 'gemini' | 'mixed';
+        confidence_score: number;
+        data_sources: string[];
+        api_response_time?: number;
+        image_source?: 'unsplash' | 'openfoodfacts' | 'fallback';
+        image_confidence?: number;
+        alternatives_source?: 'real_api' | 'ai_generated' | 'mixed';
+        barcode?: string;
+        brand?: string;
+        category?: string;
+        ingredients?: string[];
+        certifications?: string[];
+        packaging_score?: number;
+        carbon_score?: number;
+        material_score?: number;
+        health_score?: number;
+        recyclable?: boolean;
+        organic?: boolean;
+        fair_trade?: boolean;
+        carbon_neutral?: boolean;
+      };
     }) => {
       if (!user) throw new Error('No user found');
       
@@ -252,7 +275,7 @@ export const useCreateScan = () => {
         userStats
       });
 
-      // Create scan record following exact Supabase schema
+      // Create scan record following exact Supabase schema with enhanced metadata
       const scanRecord = {
         user_id: user.id,
         product_id: scanData.product_id || null, // FK to products table
@@ -265,9 +288,35 @@ export const useCreateScan = () => {
         points_earned: scoreCalculation.totalPoints,
         metadata: {
           ...scanData.metadata,
+          // Enhanced API metadata
+          ...(scanData.enriched_data && {
+            enriched_data: {
+              source: scanData.enriched_data.source,
+              confidence_score: scanData.enriched_data.confidence_score,
+              data_sources: scanData.enriched_data.data_sources,
+              api_response_time: scanData.enriched_data.api_response_time,
+              image_source: scanData.enriched_data.image_source,
+              image_confidence: scanData.enriched_data.image_confidence,
+              alternatives_source: scanData.enriched_data.alternatives_source,
+              barcode: scanData.enriched_data.barcode,
+              brand: scanData.enriched_data.brand,
+              category: scanData.enriched_data.category,
+              ingredients: scanData.enriched_data.ingredients,
+              certifications: scanData.enriched_data.certifications,
+              packaging_score: scanData.enriched_data.packaging_score,
+              carbon_score: scanData.enriched_data.carbon_score,
+              material_score: scanData.enriched_data.material_score,
+              health_score: scanData.enriched_data.health_score,
+              recyclable: scanData.enriched_data.recyclable,
+              organic: scanData.enriched_data.organic,
+              fair_trade: scanData.enriched_data.fair_trade,
+              carbon_neutral: scanData.enriched_data.carbon_neutral,
+            }
+          }),
           scoring_breakdown: scoreCalculation.breakdown,
           enhanced_scoring: true,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          data_quality: scanData.enriched_data ? 'enhanced' : 'standard'
         }
       };
 
