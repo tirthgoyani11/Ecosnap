@@ -1,4 +1,5 @@
-import { GeminiProductAPI, ProductAnalysis } from '@/lib/gemini-product-api';
+import { GeminiProductAPI, ProductAnalysis } from '../lib/gemini-product-api';
+import { EnhancedImageSearchAPI } from '../integrations/enhanced-image-search';
 
 export interface EnhancedProduct {
   id: string;
@@ -25,34 +26,33 @@ export interface EnhancedProduct {
 }
 
 export class DiscoverProductService {
-  private static readonly UNSPLASH_ACCESS_KEY = 'demo-key';
-  
   /**
-   * Fetch product image from Unsplash based on category and product name
+   * Fetch product image using enhanced image search with multiple APIs
    */
   static async fetchProductImage(category: string, productName: string): Promise<string> {
     try {
-      const searchTerm = `eco-friendly ${category} ${productName}`.toLowerCase();
-      const response = await fetch(
-        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm)}&per_page=1&orientation=squarish`,
-        {
-          headers: {
-            Authorization: `Client-ID ${this.UNSPLASH_ACCESS_KEY}`
-          }
-        }
+      // Use our enhanced image search which tries multiple APIs
+      const images = await EnhancedImageSearchAPI.getProductImages(
+        productName,
+        category
       );
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.results && data.results.length > 0) {
-          return data.results[0].urls.small;
-        }
+      
+      if (images && images.length > 0) {
+        // Return the best quality image available
+        const highQuality = images.find(img => img.quality === 'high');
+        if (highQuality) return highQuality.url;
+        
+        const mediumQuality = images.find(img => img.quality === 'medium');
+        if (mediumQuality) return mediumQuality.url;
+        
+        // Fallback to any available image
+        return images[0].url;
       }
     } catch (error) {
-      console.error('Failed to fetch Unsplash image:', error);
+      console.error('Enhanced image search failed:', error);
     }
 
-    // Fallback: return a category-based placeholder URL
+    // Ultimate fallback: return a category-based placeholder URL
     return this.getCategoryPlaceholderImage(category);
   }
 

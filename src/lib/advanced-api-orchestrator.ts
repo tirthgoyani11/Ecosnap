@@ -11,7 +11,7 @@ import { BarcodeAPI } from '../integrations/barcode-api';
 import { FairTradeAPI } from '../integrations/fairtrade-api';
 import { WalmartAPI } from '../integrations/walmart-api';
 import { AmazonAPI } from '../integrations/amazon-api';
-import { IntelligentImageSearch } from './intelligent-image-search';
+import { EnhancedImageSearchAPI } from '../integrations/enhanced-image-search';
 import { ProductDataEnrichment } from './enhanced-product-enrichment';
 
 export interface ComprehensiveProductData {
@@ -286,13 +286,12 @@ export class AdvancedAPIOrchestrator {
       });
     }
     
-    // Enhanced image search
+    // Enhanced image search across multiple free APIs
     sustainabilityPromises.push({
       source: 'images',
-      promise: IntelligentImageSearch.findBestProductImage(
-        basicData.openfoodfacts?.product_name,
-        basicData.openfoodfacts?.brand,
-        basicData.openfoodfacts?.category
+      promise: EnhancedImageSearchAPI.getProductImages(
+        basicData.openfoodfacts?.product_name || '',
+        basicData.openfoodfacts?.category || ''
       )
     });
     
@@ -317,7 +316,7 @@ export class AdvancedAPIOrchestrator {
       brand: primary.brand || 'Unknown Brand',
       category: primary.category || 'Unknown Category',
       barcode: primary.barcode || '',
-      image_url: sustainabilityData.images || primary.image_url || '',
+      image_url: this.extractBestImageUrl(sustainabilityData.images) || primary.image_url || '',
       
       // Sustainability scores (intelligently calculated)
       eco_score: this.calculateCompositeEcoScore(sustainabilityData),
@@ -498,6 +497,25 @@ export class AdvancedAPIOrchestrator {
     if (sustainabilityData.howgood && !sustainabilityData.howgood.error) confidence += 0.2;
     
     return Math.min(1, confidence);
+  }
+
+  /**
+   * Extract the best image URL from enhanced image search results
+   */
+  private static extractBestImageUrl(imageResults: any): string {
+    if (!imageResults || !Array.isArray(imageResults) || imageResults.length === 0) {
+      return '';
+    }
+
+    // Priority order: high quality, medium quality, low quality
+    const highQuality = imageResults.find(img => img.quality === 'high');
+    if (highQuality) return highQuality.url;
+
+    const mediumQuality = imageResults.find(img => img.quality === 'medium');
+    if (mediumQuality) return mediumQuality.url;
+
+    // Fallback to any available image
+    return imageResults[0]?.url || '';
   }
 
   private static getSourceFallback(source: string): any {

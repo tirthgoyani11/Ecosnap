@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { EnhancedImageSearchAPI } from "../integrations/enhanced-image-search";
 import { Progress } from "@/components/ui/progress";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useToast } from "@/hooks/use-toast";
@@ -88,46 +89,50 @@ interface CartItem extends EnhancedProduct {
   quantity: number;
 }
 
-// Unsplash API Service
-class UnsplashService {
-  private static ACCESS_KEY = import.meta.env.VITE_UNSPLASH_ACCESS_KEY;
-  private static BASE_URL = 'https://api.unsplash.com';
-
+// Enhanced Image Search Service (using multiple APIs)
+class EnhancedImageService {
   static async searchImages(query: string, count: number = 1): Promise<string[]> {
-    if (!this.ACCESS_KEY) {
-      console.warn('Unsplash API key not found, using placeholder images');
-      return Array(count).fill('/placeholder.svg');
-    }
-
     try {
-      const response = await fetch(
-        `${this.BASE_URL}/search/photos?query=${encodeURIComponent(query)}&per_page=${count}&orientation=portrait`,
-        {
-          headers: {
-            'Authorization': `Client-ID ${this.ACCESS_KEY}`
-          }
-        }
-      );
+      // Use our enhanced image search which tries multiple APIs
+      const images = await EnhancedImageSearchAPI.searchProductImages({
+        query: query,
+        limit: count,
+        safeSearch: true
+      });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch from Unsplash');
+      if (images && images.length > 0) {
+        // Extract URLs with quality preference
+        const imageUrls = images
+          .sort((a, b) => {
+            // Priority: high > medium > low
+            const qualityOrder = { high: 3, medium: 2, low: 1 };
+            return qualityOrder[b.quality] - qualityOrder[a.quality];
+          })
+          .slice(0, count)
+          .map(img => img.url);
+
+        return imageUrls.length > 0 ? imageUrls : Array(count).fill('/placeholder.svg');
       }
-
-      const data = await response.json();
-      return data.results.map((photo: any) => photo.urls.regular) || ['/placeholder.svg'];
     } catch (error) {
-      console.error('Unsplash API error:', error);
-      return Array(count).fill('/placeholder.svg');
+      console.error('Enhanced image search error:', error);
     }
+
+    // Fallback to placeholder images
+    return Array(count).fill('/placeholder.svg');
   }
 }
 
 // Real-time search with Gemini
 class RealTimeSearch {
-  static async searchProducts(query: string): Promise<EnhancedProduct[]> {
+  static async searchProducts(query: string, mode: 'sustainable' | 'all' = 'sustainable'): Promise<EnhancedProduct[]> {
     if (!query.trim()) return [];
 
-    const prompt = `Search for eco-friendly products related to "${query}". Find 6 real products from the market with authentic information.
+    // Create different prompts based on search mode
+    const sustainablePrompt = `Search for eco-friendly products related to "${query}". Find 6 real products from the market with authentic information.`;
+    
+    const generalPrompt = `Search for products related to "${query}". Find 6 real products from the market with authentic information. Include both eco-friendly and regular products.`;
+
+    const prompt = `${mode === 'sustainable' ? sustainablePrompt : generalPrompt}
     
     Return JSON format with realistic Indian market data:
     {
@@ -162,11 +167,13 @@ class RealTimeSearch {
     
     IMPORTANT:
     - Find REAL products that exist in the market
-    - Use authentic brand names and realistic specifications
+    - Use authentic brand names and realistic specifications  
     - Include proper Indian pricing (₹500 - ₹50,000 range)
-    - Focus on sustainable/eco-friendly alternatives when possible
+    ${mode === 'sustainable' 
+      ? '- Focus on sustainable/eco-friendly alternatives when possible\n    - Make eco_scores realistic (70-95 range)'
+      : '- Include both eco-friendly and regular products\n    - Make eco_scores realistic (30-95 range depending on product sustainability)'
+    }
     - Provide search terms for finding relevant product images
-    - Make eco_scores realistic (70-95 range)
     - Include both Indian and international brands appropriately`;
 
     try {
@@ -188,10 +195,10 @@ class RealTimeSearch {
       const products: EnhancedProduct[] = [];
 
       for (const productData of data.products || []) {
-        // Get real image from Unsplash using search terms
+        // Get real image from Enhanced Image Search using search terms
         const searchTerms = productData.search_terms || 
                           `${productData.name} ${productData.category} sustainable eco product`;
-        const images = await UnsplashService.searchImages(searchTerms, 1);
+        const images = await EnhancedImageService.searchImages(searchTerms, 1);
 
         const product: EnhancedProduct = {
           id: `search-${Date.now()}-${Math.random()}`,
@@ -285,8 +292,8 @@ class ProductGenerator {
             const data = JSON.parse(jsonMatch[0].replace(/```json\n?|\n?```/g, ''));
             
             for (const productData of data.products || []) {
-              // Get real image from Unsplash
-              const images = await UnsplashService.searchImages(
+              // Get real image from Enhanced Image Search
+              const images = await EnhancedImageService.searchImages(
                 `${productData.name} ${category} sustainable eco-friendly product`,
                 1
               );
@@ -455,6 +462,7 @@ export default function SuperDiscoverPage() {
   // State Management
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchMode, setSearchMode] = useState<'sustainable' | 'all'>('sustainable');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('trending');
   const [showFilters, setShowFilters] = useState(false);
@@ -508,11 +516,11 @@ export default function SuperDiscoverPage() {
 
     setIsSearching(true);
     try {
-      const results = await RealTimeSearch.searchProducts(query);
+      const results = await RealTimeSearch.searchProducts(query, searchMode);
       setSearchResults(results);
       toast({
         title: "Search Complete! 🔍",
-        description: `Found ${results.length} products for "${query}"`,
+        description: `Found ${results.length} ${searchMode === 'sustainable' ? 'sustainable' : ''} products for "${query}"`,
       });
     } catch (error) {
       console.error('Search error:', error);
@@ -799,16 +807,48 @@ export default function SuperDiscoverPage() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                Real-time eco-friendly products with AI-powered suggestions
+                {searchMode === 'sustainable' 
+                  ? 'Real-time eco-friendly products with AI-powered suggestions'
+                  : 'Search any products with AI-powered analysis'
+                }
               </motion.p>
             </div>
 
-            {/* Search Bar */}
-            <div className="flex-1 max-w-md">
+            {/* Search Mode Toggle & Search Bar */}
+            <div className="flex-1 max-w-md space-y-3">
+              {/* Search Mode Toggle */}
+              <div className="flex items-center justify-center">
+                <div className="bg-white/10 backdrop-blur-sm rounded-full p-1 border border-white/20">
+                  <div className="flex">
+                    <button
+                      onClick={() => setSearchMode('sustainable')}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        searchMode === 'sustainable'
+                          ? 'bg-green-500 text-white shadow-lg'
+                          : 'text-slate-600 hover:text-slate-800'
+                      }`}
+                    >
+                      🌱 Sustainable
+                    </button>
+                    <button
+                      onClick={() => setSearchMode('all')}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        searchMode === 'all'
+                          ? 'bg-blue-500 text-white shadow-lg'
+                          : 'text-slate-600 hover:text-slate-800'
+                      }`}
+                    >
+                      🛍️ All Products
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Search Bar */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
-                  placeholder="Search eco-friendly products..."
+                  placeholder={searchMode === 'sustainable' ? "Search eco-friendly products..." : "Search any products (e.g., iPhone 15 Pro)..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 h-12 bg-white/50 backdrop-blur-sm border-white/30 focus:border-blue-400 rounded-2xl"
@@ -980,19 +1020,39 @@ export default function SuperDiscoverPage() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-200"
+            className={`mb-6 p-4 rounded-xl border ${
+              searchMode === 'sustainable' 
+                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
+                : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
+            }`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Search className="w-5 h-5 text-green-600" />
+                <div className={`p-2 rounded-lg ${
+                  searchMode === 'sustainable' ? 'bg-green-100' : 'bg-blue-100'
+                }`}>
+                  <Search className={`w-5 h-5 ${
+                    searchMode === 'sustainable' ? 'text-green-600' : 'text-blue-600'
+                  }`} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800">
-                    {isSearching ? 'Searching...' : `Search Results for "${searchQuery}"`}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-gray-800">
+                      {isSearching ? 'Searching...' : `Search Results for "${searchQuery}"`}
+                    </h3>
+                    <Badge className={`text-xs ${
+                      searchMode === 'sustainable' 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {searchMode === 'sustainable' ? '🌱 Sustainable Mode' : '🛍️ All Products Mode'}
+                    </Badge>
+                  </div>
                   <p className="text-sm text-gray-600">
-                    {isSearching ? 'Finding products from across the web' : `Found ${filteredProducts.length} products`}
+                    {isSearching 
+                      ? `Finding ${searchMode === 'sustainable' ? 'eco-friendly' : 'all'} products from across the web` 
+                      : `Found ${filteredProducts.length} ${searchMode === 'sustainable' ? 'sustainable' : ''} products`
+                    }
                   </p>
                 </div>
               </div>

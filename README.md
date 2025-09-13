@@ -6,6 +6,7 @@ A fast, polished web app that scans products and turns them into actionable sust
 - Delightful demo: camera scanning, smooth animations, and AR overlays.
 ## What's inside (feature overview)
 - Product Scanner (camera or upload) with instant eco score and summary
+- **Enhanced Image Search**: 6 free image APIs with intelligent fallback chain
 - AR Overlay preview that floats the score and key facts in your view
 - Bulk Scan (CSV or gallery) for batch analysis and quick triage
 - Dashboard with trends, badges, and personal progress
