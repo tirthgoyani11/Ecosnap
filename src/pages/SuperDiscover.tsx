@@ -1462,7 +1462,7 @@ export default function SuperDiscoverPage() {
                     </div>
 
                     {/* Description */}
-                    <p className="text-slate-600 dark:text-slate-400">
+                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
                       {selectedProduct.description}
                     </p>
 

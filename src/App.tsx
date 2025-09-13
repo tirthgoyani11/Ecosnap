@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { EnhancedThemeProvider } from "./components/EnhancedThemeProvider";
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -33,110 +34,115 @@ import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <div className="min-h-screen bg-background">
-            <NavBar />
-            <Routes>
-            <Route path="/" element={<IndexEnhanced />} />
-            
-            {/* Auth Routes */}
-            <Route 
-              path="/login" 
-              element={
-                <ProtectedRoute requireAuth={false}>
-                  <LoginNew />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/signup" 
-              element={
-                <ProtectedRoute requireAuth={false}>
-                  <SignUpNew />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Protected Routes */}
-            <Route 
-              path="/scanner" 
-              element={
-                <ProtectedRoute>
-                  <SmartScanner />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/product/:productId" 
-              element={
-                <ProtectedRoute>
-                  <ProductDetailsPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/bulk" 
-              element={
-                <ProtectedRoute>
-                  <BulkScan />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/discover" 
-              element={
-                <ProtectedRoute>
-                  <SuperDiscover />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/discover-new" 
-              element={
-                <ProtectedRoute>
-                  <DiscoverNewEnhanced />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/leaderboard" 
-              element={
-                <ProtectedRoute>
-                  <Leaderboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/settings" 
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* 404 Route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Footer />
-        </div>
-      </BrowserRouter>
-    </TooltipProvider>
-  </AuthProvider>
-</QueryClientProvider>
+  <EnhancedThemeProvider
+    defaultTheme="system"
+    storageKey="ecosnap-theme"
+  >
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <div className="min-h-screen bg-background">
+              <NavBar />
+              <Routes>
+              <Route path="/" element={<IndexEnhanced />} />
+              
+              {/* Auth Routes */}
+              <Route 
+                path="/login" 
+                element={
+                  <ProtectedRoute requireAuth={false}>
+                    <LoginNew />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/signup" 
+                element={
+                  <ProtectedRoute requireAuth={false}>
+                    <SignUpNew />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Protected Routes */}
+              <Route 
+                path="/scanner" 
+                element={
+                  <ProtectedRoute>
+                    <SmartScanner />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/product/:productId" 
+                element={
+                  <ProtectedRoute>
+                    <ProductDetailsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/bulk" 
+                element={
+                  <ProtectedRoute>
+                    <BulkScan />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/discover" 
+                element={
+                  <ProtectedRoute>
+                    <SuperDiscover />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/discover-new" 
+                element={
+                  <ProtectedRoute>
+                    <DiscoverNewEnhanced />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/leaderboard" 
+                element={
+                  <ProtectedRoute>
+                    <Leaderboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/settings" 
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* 404 Route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Footer />
+          </div>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+  </EnhancedThemeProvider>
 );
 
 export default App;

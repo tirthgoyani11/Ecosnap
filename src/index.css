@@ -227,49 +227,56 @@
   }
 
   .dark {
-    /* Dark theme */
-    --background: 215.4 16.3% 3.9%;
-    --foreground: 210 20% 98%;
+    /* Enhanced Dark theme with better contrast */
+    --background: 210 11% 4%;
+    --foreground: 210 40% 98%;
 
-    --card: 215.4 16.3% 6.9%;
-    --card-foreground: 210 20% 98%;
+    --card: 210 11% 8%;
+    --card-foreground: 210 40% 96%;
 
-    --popover: 215.4 16.3% 6.9%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 210 11% 8%;
+    --popover-foreground: 210 40% 96%;
 
-    /* EcoSnap Primary - Emerald (brighter in dark) */
-    --primary: 160 84% 39%;
+    /* EcoSnap Primary - Enhanced visibility in dark */
+    --primary: 160 84% 45%;
     --primary-foreground: 0 0% 100%;
 
-    /* EcoSnap Secondary - Teal */
-    --secondary: 173 80% 40%;
+    /* EcoSnap Secondary - Brighter in dark */
+    --secondary: 173 80% 50%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217.2 32.6% 15%;
+    --muted-foreground: 215 20.2% 70%;
 
-    /* EcoSnap Accent */
-    --accent: 172 77% 56%;
-    --accent-foreground: 215.4 16.3% 3.9%;
+    /* EcoSnap Accent - More visible */
+    --accent: 172 77% 60%;
+    --accent-foreground: 210 11% 4%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84% 50%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 160 84% 39%;
-    /* Dark Glass Effects */
-    --glass-bg: 0 0% 100% / 0.1;
-    --glass-border: 0 0% 100% / 0.1;
-    --glass-glow: 0 0% 0% / 0.15;
+    --border: 217.2 32.6% 18%;
+    --input: 217.2 32.6% 18%;
+    --ring: 160 84% 45%;
     
-    /* Dark Gradients */
-    --gradient-eco-start: 160 84% 39% / 0.15;
-    --gradient-eco-via: 172 77% 56% / 0.15;
-    --gradient-eco-end: 160 84% 39% / 0.05;
+    /* Enhanced Dark Glass Effects */
+    --glass-bg: 0 0% 100% / 0.12;
+    --glass-border: 0 0% 100% / 0.15;
+    --glass-glow: 0 0% 0% / 0.2;
     
-    --gradient-glass-start: 0 0% 100% / 0.05;
-    --gradient-glass-end: 0 0% 100% / 0;
+    /* Enhanced Dark Gradients */
+    --gradient-eco-start: 160 84% 45% / 0.2;
+    --gradient-eco-via: 172 77% 60% / 0.2;
+    --gradient-eco-end: 160 84% 45% / 0.1;
+    
+    --gradient-glass-start: 0 0% 100% / 0.08;
+    --gradient-glass-end: 0 0% 100% / 0.02;
+    
+    /* Text contrast helpers for dark mode */
+    --text-high-contrast: 210 40% 98%;
+    --text-medium-contrast: 210 20% 85%;
+    --text-low-contrast: 210 15% 70%;
+    --text-inverse: 210 11% 4%;
   }
 }
 
@@ -301,6 +308,59 @@
     @apply bg-gradient-to-br from-white/10 to-white/5 dark:from-white/5 dark:to-white/0;
   }
   
+  /* Enhanced Dark Mode Text Classes */
+  .text-high-contrast {
+    @apply text-slate-900 dark:text-slate-50;
+  }
+  
+  .text-medium-contrast {
+    @apply text-slate-700 dark:text-slate-200;
+  }
+  
+  .text-low-contrast {
+    @apply text-slate-600 dark:text-slate-400;
+  }
+  
+  .text-inverse-contrast {
+    @apply text-slate-50 dark:text-slate-900;
+  }
+  
+  /* Mobile-First Background Classes */
+  .bg-adaptive {
+    @apply bg-white dark:bg-slate-900;
+  }
+  
+  .bg-adaptive-subtle {
+    @apply bg-slate-50 dark:bg-slate-800;
+  }
+  
+  .bg-adaptive-card {
+    @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700;
+  }
+  
+  /* Mobile-Responsive Button Classes */
+  .btn-mobile {
+    @apply px-4 py-3 sm:px-6 sm:py-2 text-base sm:text-sm;
+  }
+  
+  .btn-mobile-icon {
+    @apply p-3 sm:p-2;
+  }
+  
+  /* Mobile-Optimized Cards */
+  .card-mobile {
+    @apply p-4 sm:p-6 mx-2 sm:mx-0 rounded-xl sm:rounded-lg;
+  }
+  
+  /* React Native Compatible Shadows */
+  .shadow-mobile {
+    @apply shadow-lg sm:shadow-md;
+  }
+  
+  .shadow-mobile-strong {
+    @apply shadow-xl sm:shadow-lg;
+  }
+  
   /* Animation utilities */
   .animate-fade-up {
     @apply animate-[fadeUp_0.6s_ease-out_forwards];
@@ -324,6 +384,24 @@
   
   .animate-float {
     @apply animate-[float_3s_ease-in-out_infinite];
+  }
+  
+  /* Mobile-First Spacing */
+  .spacing-mobile {
+    @apply space-y-4 sm:space-y-6;
+  }
+  
+  .spacing-mobile-tight {
+    @apply space-y-2 sm:space-y-3;
+  }
+  
+  /* Touch-Friendly Interactive Elements */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  .touch-padding {
+    @apply p-3 sm:p-2;
   }
 }
 

@@ -13,12 +13,29 @@ export default {
 	theme: {
 		container: {
 			center: true,
-			padding: '2rem',
+			padding: {
+				DEFAULT: '1rem',
+				sm: '2rem',
+				lg: '4rem',
+				xl: '5rem',
+				'2xl': '6rem',
+			},
 			screens: {
+				sm: '640px',
+				md: '768px',
+				lg: '1024px',
+				xl: '1280px',
 				'2xl': '1400px'
 			}
 		},
 		extend: {
+			screens: {
+				'xs': '375px',
+				'touch': '480px',
+				'tablet': '768px',
+				'desktop': '1024px',
+				'wide': '1280px',
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -67,7 +84,31 @@ export default {
 					bg: 'hsl(var(--glass-bg))',
 					border: 'hsl(var(--glass-border))',
 					glow: 'hsl(var(--glass-glow))'
-				}
+				},
+				// Enhanced contrast colors for dark mode
+				'high-contrast': 'hsl(var(--text-high-contrast))',
+				'medium-contrast': 'hsl(var(--text-medium-contrast))', 
+				'low-contrast': 'hsl(var(--text-low-contrast))',
+				'inverse-contrast': 'hsl(var(--text-inverse))',
+			},
+			spacing: {
+				'mobile': '1rem',
+				'tablet': '1.5rem',
+				'desktop': '2rem',
+				'touch': '44px', // Minimum touch target size
+				'safe-top': 'env(safe-area-inset-top)',
+				'safe-bottom': 'env(safe-area-inset-bottom)',
+				'safe-left': 'env(safe-area-inset-left)',
+				'safe-right': 'env(safe-area-inset-right)',
+			},
+			fontSize: {
+				'mobile-xs': ['0.75rem', { lineHeight: '1rem' }],
+				'mobile-sm': ['0.875rem', { lineHeight: '1.25rem' }],
+				'mobile-base': ['1rem', { lineHeight: '1.5rem' }],
+				'mobile-lg': ['1.125rem', { lineHeight: '1.75rem' }],
+				'mobile-xl': ['1.25rem', { lineHeight: '1.75rem' }],
+				'mobile-2xl': ['1.5rem', { lineHeight: '2rem' }],
+				'mobile-3xl': ['1.875rem', { lineHeight: '2.25rem' }],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -152,8 +193,23 @@ export default {
 				'glass': '0 8px 30px rgba(0, 0, 0, 0.08)',
 				'glass-dark': '0 8px 30px rgba(0, 0, 0, 0.15)',
 				'glow': '0 0 20px hsl(var(--primary) / 0.3)',
-				'glow-strong': '0 0 30px hsl(var(--primary) / 0.6)'
-			}
+				'glow-strong': '0 0 30px hsl(var(--primary) / 0.6)',
+				'mobile': '0 4px 12px rgba(0, 0, 0, 0.1)',
+				'mobile-strong': '0 8px 24px rgba(0, 0, 0, 0.15)',
+				'react-native': '0 2px 8px rgba(0, 0, 0, 0.1)', // React Native compatible
+			},
+			minHeight: {
+				'touch': '44px',
+				'mobile-screen': '100vh',
+				'mobile-safe': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+			},
+			minWidth: {
+				'touch': '44px',
+			},
+			maxWidth: {
+				'mobile': '100vw',
+				'mobile-safe': 'calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right))',
+			},
 		}
 	},
 	plugins: [tailwindcssAnimate],

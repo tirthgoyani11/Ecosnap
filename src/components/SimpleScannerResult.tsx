@@ -68,10 +68,10 @@ export const SimpleScannerResult: React.FC<SimpleScannerResultProps> = ({
   if (!product || !isOpen) return null;
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-500 bg-green-100';
-    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
-    if (score >= 40) return 'text-orange-600 bg-orange-100';
-    return 'text-red-600 bg-red-100';
+    if (score >= 80) return 'text-green-500 dark:text-green-400 bg-green-100 dark:bg-green-900/30';
+    if (score >= 60) return 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30';
+    if (score >= 40) return 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30';
+    return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30';
   };
 
   const getScoreDescription = (score: number) => {

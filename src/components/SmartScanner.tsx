@@ -24,10 +24,10 @@ const CompactProductResultCard = ({ product, onViewDetails, onSearchAlternative 
   if (!product) return null;
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600 bg-green-100';
-    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
-    if (score >= 40) return 'text-orange-600 bg-orange-100';
-    return 'text-red-600 bg-red-100';
+    if (score >= 80) return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30';
+    if (score >= 60) return 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30';
+    if (score >= 40) return 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30';
+    return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30';
   };
 
   const getScoreDescription = (score: number) => {
@@ -43,8 +43,8 @@ const CompactProductResultCard = ({ product, onViewDetails, onSearchAlternative 
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div>
-              <CardTitle className="text-xl font-bold text-gray-900">{product.productName}</CardTitle>
-              <div className="text-md text-gray-600 mt-1">
+              <CardTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">{product.productName}</CardTitle>
+              <div className="text-md text-slate-600 dark:text-slate-400 mt-1">
                 <span>by {product.brand || 'Unknown'} · </span>
                 <Badge variant="secondary" className="align-middle">{product.category || 'General'}</Badge>
               </div>
@@ -86,13 +86,13 @@ const CompactProductResultCard = ({ product, onViewDetails, onSearchAlternative 
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="bg-gray-50 p-2 rounded-lg text-center">
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-center">
               <Recycle className={`mx-auto mb-1 ${product.recyclable ? 'text-green-500' : 'text-red-500'}`} size={16} />
-              <div className="font-medium">{product.recyclable ? 'Recyclable' : 'Not Recyclable'}</div>
+              <div className="font-medium text-slate-900 dark:text-slate-100">{product.recyclable ? 'Recyclable' : 'Not Recyclable'}</div>
             </div>
-            <div className="bg-gray-50 p-2 rounded-lg text-center">
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-center">
               <Cloud className="text-blue-500 mx-auto mb-1" size={16} />
-              <div className="font-medium">{product.co2Impact || 'N/A'} kg CO₂</div>
+              <div className="font-medium text-slate-900 dark:text-slate-100">{product.co2Impact || 'N/A'} kg CO₂</div>
             </div>
           </div>
 
@@ -119,7 +119,7 @@ const CompactProductResultCard = ({ product, onViewDetails, onSearchAlternative 
 
           {/* Eco Description Preview */}
           {product.ecoDescription && (
-            <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded-md line-clamp-2">
+            <div className="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-md line-clamp-2">
               {product.ecoDescription.slice(0, 120)}...
             </div>
           )}
@@ -1108,7 +1108,7 @@ export const SmartScanner: React.FC = () => {
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-green-600 bg-clip-text text-transparent">
               🌟 Choose Your Scanning Method
             </CardTitle>
-            <p className="text-gray-600 dark:text-gray-300 mt-2 text-lg">
+            <p className="text-slate-600 dark:text-slate-300 mt-2 text-lg">
               Select how you want to analyze your products with AI
             </p>
           </CardHeader>
@@ -1154,7 +1154,7 @@ export const SmartScanner: React.FC = () => {
                   <Card className={`h-full border-2 transition-all duration-300 ${
                     scanMode === mode 
                       ? `border-transparent bg-gradient-to-br ${color} text-white shadow-2xl` 
-                      : `border-gray-300 dark:border-gray-600 hover:border-transparent bg-white dark:bg-gray-800 hover:bg-gradient-to-br hover:${color} hover:text-white hover:shadow-xl`
+                      : `border-slate-300 dark:border-slate-600 hover:border-transparent bg-white dark:bg-slate-800 hover:bg-gradient-to-br hover:${color} hover:text-white hover:shadow-xl`
                   }`}>
                     <CardContent className="p-6 text-center space-y-4 h-full flex flex-col justify-between">
                       <div>
@@ -1167,12 +1167,12 @@ export const SmartScanner: React.FC = () => {
                         </div>
                         
                         <h3 className={`text-xl font-bold mb-2 transition-colors duration-300 ${
-                          scanMode === mode ? 'text-white' : 'text-gray-900 dark:text-gray-100 group-hover:text-white'
+                          scanMode === mode ? 'text-white' : 'text-slate-900 dark:text-slate-100 group-hover:text-white'
                         }`}>
                           {label}
                         </h3>
                         <p className={`text-sm mb-4 transition-colors duration-300 ${
-                          scanMode === mode ? 'text-white/90' : 'text-gray-700 dark:text-gray-300 group-hover:text-white/90'
+                          scanMode === mode ? 'text-white/90' : 'text-slate-700 dark:text-slate-300 group-hover:text-white/90'
                         }`}>
                           {desc}
                         </p>
@@ -1183,7 +1183,7 @@ export const SmartScanner: React.FC = () => {
                           <div key={idx} className={`text-xs px-3 py-1 rounded-full transition-all duration-300 ${
                             scanMode === mode 
                               ? 'bg-white/20 text-white' 
-                              : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 group-hover:bg-white/20 group-hover:text-white'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 group-hover:bg-white/20 group-hover:text-white'
                           }`}>
                             ✓ {feature}
                           </div>
@@ -1215,9 +1215,9 @@ export const SmartScanner: React.FC = () => {
             </p>
           </CardHeader>
           
-          <CardContent className="p-8">
-            <div className="relative max-w-2xl mx-auto">
-              <div className="relative overflow-hidden rounded-2xl bg-black shadow-2xl border-4 border-green-200 dark:border-green-700">
+          <CardContent className="p-4 sm:p-6">
+            <div className="relative max-w-5xl mx-auto">
+              <div className="relative overflow-hidden rounded-xl bg-black shadow-2xl border-2 border-green-200 dark:border-green-700">
                 {!isScanning && (
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black flex flex-col items-center justify-center text-white p-8">
                     <div className="relative mb-6">
@@ -1272,31 +1272,25 @@ export const SmartScanner: React.FC = () => {
                   <div className="absolute inset-0 pointer-events-none">
                     {/* Enhanced scanning overlay */}
                     <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-                      <Badge className="bg-green-600/80 text-white border-green-400/50 px-3 py-1 rounded-full backdrop-blur-sm">
+                      <Badge className="bg-green-600/90 text-white border-green-400/50 px-3 py-1 rounded-full backdrop-blur-sm font-semibold shadow-lg">
                         📹 Camera: {facingMode === 'environment' ? 'Back' : 'Front'}
                       </Badge>
-                      <Badge className="bg-emerald-600/80 text-white border-emerald-400/50 px-3 py-1 rounded-full backdrop-blur-sm animate-pulse">
+                      <Badge className="bg-emerald-600/90 text-white border-emerald-400/50 px-3 py-1 rounded-full backdrop-blur-sm animate-pulse font-semibold shadow-lg">
                         🟢 Ready to Scan
                       </Badge>
                     </div>
                     
-                    {/* Enhanced scanning frame */}
-                    <div className="absolute inset-8 border-3 border-green-400/70 rounded-2xl shadow-2xl">
-                      <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-green-300 rounded-tl-2xl animate-pulse"></div>
-                      <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-green-300 rounded-tr-2xl animate-pulse delay-100"></div>
-                      <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-green-300 rounded-bl-2xl animate-pulse delay-200"></div>
-                      <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-green-300 rounded-br-2xl animate-pulse delay-300"></div>
-                      
-                      {/* Scanning line animation */}
-                      <div className="absolute inset-0 overflow-hidden rounded-2xl">
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent animate-pulse"></div>
-                      </div>
+                    {/* Minimal scanning frame */}
+                    <div className="absolute inset-2 border-2 border-green-400/50 rounded-xl">
+                      <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-green-300 rounded-tl-lg"></div>
+                      <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-green-300 rounded-tr-lg"></div>
+                      <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-green-300 rounded-bl-lg"></div>
+                      <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-green-300 rounded-br-lg"></div>
                     </div>
                     
-                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
-                      <div className="bg-black/70 backdrop-blur-sm text-white px-6 py-3 rounded-2xl border border-green-400/30 text-center">
-                        <p className="font-semibold text-lg mb-1">🎯 Position product in frame</p>
-                        <p className="text-sm text-gray-300">Tap "Scan Product" when ready</p>
+                    <div className="absolute top-4 right-4">
+                      <div className="bg-black/80 backdrop-blur-sm text-white px-3 py-2 rounded-lg border border-green-400/30 text-center shadow-lg max-w-xs">
+                        <p className="text-xs text-gray-100 font-medium">🎯 Frame product • Tap scan when ready</p>
                       </div>
                     </div>
                   </div>
@@ -1304,13 +1298,13 @@ export const SmartScanner: React.FC = () => {
               </div>
               
               {/* Enhanced camera controls */}
-              <div className="flex justify-center items-center space-x-6 mt-8">
+              <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6 mt-4">
                 <Button 
                   variant="outline" 
                   size="lg" 
                   onClick={toggleCamera} 
                   disabled={loading || !isScanning}
-                  className="flex-shrink-0 px-6 py-3 border-2 border-green-300 hover:border-green-400 rounded-xl font-semibold text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 transition-all duration-300"
+                  className="w-full sm:w-auto flex-shrink-0 px-6 py-3 border-2 border-green-300 hover:border-green-400 rounded-xl font-semibold text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 transition-all duration-300"
                 >
                   <RotateCcw size={24} className="mr-2" />
                   🔄 Flip Camera
@@ -1319,37 +1313,37 @@ export const SmartScanner: React.FC = () => {
                 <Button 
                   onClick={captureAndAnalyze} 
                   disabled={loading || !isScanning} 
-                  className="px-10 py-4 text-xl font-bold flex-1 max-w-md bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 rounded-2xl"
+                  className="w-full sm:w-auto px-10 py-4 text-xl font-bold flex-1 max-w-md bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 rounded-2xl text-white"
                   size="lg"
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-                      🤖 AI Analyzing...
+                      <Loader2 className="mr-3 h-6 w-6 animate-spin text-white" />
+                      <span className="text-white">🤖 AI Analyzing...</span>
                     </>
                   ) : (
                     <>
-                      <Scan className="mr-3 h-6 w-6" />
-                      🚀 Scan Product Now
+                      <Scan className="mr-3 h-6 w-6 text-white" />
+                      <span className="text-white">🚀 Scan Product Now</span>
                     </>
                   )}
                 </Button>
               </div>
               
               {/* Camera tips */}
-              <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-xl border border-green-200/50 dark:border-green-700/50">
-                <div className="flex items-center justify-center gap-6 text-sm text-green-700 dark:text-green-300">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">💡</span>
-                    <span>Good lighting helps</span>
+              <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-lg border border-green-200/50 dark:border-green-700/50">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm text-green-700 dark:text-green-300">
+                  <div className="flex items-center justify-center sm:justify-start gap-2">
+                    <span className="text-sm">💡</span>
+                    <span className="font-medium">Good lighting</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">📏</span>
-                    <span>Keep product centered</span>
+                  <div className="flex items-center justify-center sm:justify-start gap-2">
+                    <span className="text-sm">📏</span>
+                    <span className="font-medium">Center product</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🎯</span>
-                    <span>Focus on labels</span>
+                  <div className="flex items-center justify-center sm:justify-start gap-2">
+                    <span className="text-sm">🎯</span>
+                    <span className="font-medium">Focus labels</span>
                   </div>
                 </div>
               </div>
@@ -1590,10 +1584,12 @@ export const SmartScanner: React.FC = () => {
       )}
 
       {error && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-900/30">
           <CardContent className="p-4 flex items-center justify-between">
-            <span className="text-red-700">{error}</span>
-            <Button variant="ghost" size="sm" onClick={clearSearch}><X size={16} /></Button>
+            <span className="text-red-700 dark:text-red-200 font-medium">{error}</span>
+            <Button variant="ghost" size="sm" onClick={clearSearch} className="text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-800/30">
+              <X size={16} />
+            </Button>
           </CardContent>
         </Card>
       )}
