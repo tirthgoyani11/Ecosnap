@@ -79,12 +79,6 @@ function App() {
 - **Best For**: Structured data with UI
 - **Setup**: Create base → Get API key → Configure
 
-### 🟡 Firebase Firestore (Real-time)
-- **Setup Time**: 10 minutes  
-- **Free Tier**: 50k reads + 20k writes/day
-- **Best For**: Real-time features
-- **Setup**: Create project → Enable Firestore → Get config
-
 ### 🟡 PlanetScale (Advanced)
 - **Setup Time**: 15 minutes
 - **Free Tier**: 10GB storage + 1B row reads/month

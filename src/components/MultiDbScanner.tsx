@@ -16,10 +16,8 @@ import { useAuth } from '@/contexts/AuthContext';
 // Import different database services
 import { useCreateScan } from '@/hooks/useDatabase'; // Supabase
 import { useExternalProduct, useExternalScan } from '@/services/external-db-service';
-// import { useFirebaseProduct, useFirebaseScan } from '@/services/firebase-service';
-// import { useMongoProduct, useMongoScan } from '@/services/mongodb-service';
 
-type DatabaseProvider = 'supabase' | 'external' | 'firebase' | 'mongodb';
+type DatabaseProvider = 'supabase' | 'external' | 'mongodb';
 
 interface DatabaseConfig {
   name: string;
@@ -40,12 +38,6 @@ const DATABASE_CONFIGS: Record<DatabaseProvider, DatabaseConfig> = {
     icon: <Cloud className="h-4 w-4" />,
     description: 'Product catalog & analytics',
     enabled: true,
-  },
-  firebase: {
-    name: 'Firebase',
-    icon: <HardDrive className="h-4 w-4" />,
-    description: 'Real-time features',
-    enabled: false, // Set to true when Firebase is configured
   },
   mongodb: {
     name: 'MongoDB',
@@ -140,11 +132,6 @@ export default function MultiDbScanner() {
           // Save to External Database
           result = await createExternalScan.mutateAsync(baseScanData);
           break;
-
-        // case 'firebase':
-        //   // Save to Firebase
-        //   result = await createFirebaseScan(baseScanData);
-        //   break;
 
         // case 'mongodb':
         //   // Save to MongoDB
