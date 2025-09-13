@@ -18,15 +18,10 @@ const queryClient = new QueryClient({
 });
 
 // Pages
-import Index from "./pages/Index";
 import IndexEnhanced from "./pages/IndexEnhanced";
-import Login from "./pages/Login";
 import LoginNew from "./pages/LoginNew";
-import SignUp from "./pages/SignUp";
 import SignUpNew from "./pages/SignUpNew";
-import Scanner from "./pages/Scanner";
 import { SmartScanner } from "../src/components/SmartScanner";
-import DashboardNew from './pages/DashboardNew';
 import Dashboard from './pages/Dashboard';
 import BulkScan from "./pages/BulkScan";
 import SuperDiscover from "./pages/SuperDiscover";
@@ -34,13 +29,6 @@ import DiscoverNewEnhanced from "./pages/DiscoverNewEnhanced";
 import Leaderboard from "./pages/Leaderboard";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-import TestPage from "./pages/TestPage";
-import SimpleTest from "./pages/SimpleTest";
-import RoutingTest from "./pages/RoutingTest";
-import Developer from "./pages/Developer";
-import DemoShowcase from "./pages/DemoShowcase";
-import DataFlowTest from "@/components/DataFlowTest";
-import AIAnalysisDemo from "@/components/AIAnalysisDemo";
 import Footer from "@/components/Footer";
 
 const App = () => (
@@ -54,9 +42,6 @@ const App = () => (
             <NavBar />
             <Routes>
             <Route path="/" element={<IndexEnhanced />} />
-            <Route path="/home-original" element={<Index />} />
-            <Route path="/demo" element={<DemoShowcase />} />
-            <Route path="/ai-demo" element={<AIAnalysisDemo />} />
             
             {/* Auth Routes */}
             <Route 
@@ -68,26 +53,10 @@ const App = () => (
               } 
             />
             <Route 
-              path="/login-old" 
-              element={
-                <ProtectedRoute requireAuth={false}>
-                  <Login />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
               path="/signup" 
               element={
                 <ProtectedRoute requireAuth={false}>
                   <SignUpNew />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/signup-old" 
-              element={
-                <ProtectedRoute requireAuth={false}>
-                  <SignUp />
                 </ProtectedRoute>
               } 
             />
@@ -98,14 +67,6 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <SmartScanner />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/scanner-original" 
-              element={
-                <ProtectedRoute>
-                  <Scanner />
                 </ProtectedRoute>
               } 
             />
@@ -122,14 +83,6 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/dashboard-original" 
-              element={
-                <ProtectedRoute>
-                  <DashboardNew />
                 </ProtectedRoute>
               } 
             />
@@ -165,13 +118,6 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            
-            {/* Test Routes */}
-            <Route path="/test" element={<TestPage />} />
-            <Route path="/simple" element={<SimpleTest />} />
-            <Route path="/routing-test" element={<RoutingTest />} />
-            <Route path="/data-test" element={<DataFlowTest />} />
-            <Route path="/developer" element={<Developer />} />
             
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
