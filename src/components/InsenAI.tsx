@@ -15,9 +15,10 @@ import {
   ChevronRight,
   Star
 } from 'lucide-react';
-import { Card, CardContent } from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
+import { Card, CardContent } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { insenAI } from '../services/InsenAIService';
 
 // Types for Insen AI
 interface ChatMessage {
@@ -36,6 +37,37 @@ interface InsenAIProps {
   productContext?: any; // From EcoSnap scanner
   userContext?: any; // From user profile/leaderboard
 }
+
+// Formatted Message Component to handle markdown
+const FormattedMessage: React.FC<{ content: string }> = ({ content }) => {
+  // Simple markdown parsing for bold text and basic formatting
+  const formatText = (text: string) => {
+    // Handle bold text with ** or __
+    let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-gray-900">$1</strong>');
+    formatted = formatted.replace(/__(.*?)__/g, '<strong class="font-bold text-gray-900">$1</strong>');
+    
+    // Handle italic text with * or _
+    formatted = formatted.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
+    formatted = formatted.replace(/_(.*?)_/g, '<em class="italic">$1</em>');
+    
+    // Handle inline code with backticks
+    formatted = formatted.replace(/`(.*?)`/g, '<code class="bg-gray-200 px-1 rounded text-sm font-mono">$1</code>');
+    
+    // Handle line breaks properly
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
+  };
+
+  return (
+    <div 
+      className="prose prose-sm max-w-none"
+      dangerouslySetInnerHTML={{ 
+        __html: formatText(content) 
+      }} 
+    />
+  );
+};
 
 // Main Insen AI Chatbot Component
 export const InsenAI: React.FC<InsenAIProps> = ({ 
@@ -56,7 +88,14 @@ export const InsenAI: React.FC<InsenAIProps> = ({
       const welcomeMessage: ChatMessage = {
         id: '1',
         type: 'ai',
-        content: `🌟 Hello! I'm Insen AI, your eco-smart assistant. I can help you:\n\n• 🔍 Compare eco-friendly products\n• 📊 Analyze your carbon footprint\n• ♻️ Find sustainable alternatives\n• 🌱 Track your eco-journey\n\nWhat would you like to explore today?`,
+        content: `🌟 Hello! I'm **Insen AI**, your eco-smart assistant. I can help you:
+
+• 🔍 Compare eco-friendly products
+• 📊 Analyze your carbon footprint
+• ♻️ Find sustainable alternatives
+• 🌱 Track your eco-journey
+
+**What would you like to explore today?**`,
         timestamp: new Date(),
         suggestions: [
           '🔍 Compare Products',
@@ -89,101 +128,37 @@ export const InsenAI: React.FC<InsenAIProps> = ({
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate AI response (replace with actual Gemini API call)
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(content, productContext, userContext);
-      setMessages(prev => [...prev, aiResponse]);
+    try {
+      // Use the enhanced AI service
+      const aiResponse = await insenAI.generateResponse(content, productContext, userContext);
+      
+      const responseMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai',
+        content: aiResponse.text,
+        timestamp: new Date(),
+        responseType: aiResponse.responseType,
+        data: aiResponse.data,
+        suggestions: aiResponse.suggestions
+      };
+
+      setMessages(prev => [...prev, responseMessage]);
+    } catch (error) {
+      console.error('AI Response Error:', error);
+      
+      // Fallback response
+      const fallbackMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai',
+        content: '🤖 I apologize, but I\'m experiencing some technical difficulties. Please try asking your question again, and I\'ll do my best to help you with your eco-journey! 🌱',
+        timestamp: new Date(),
+        suggestions: ['🔍 Scan Product', '📊 View Stats', '🌱 Find Alternatives', '💡 Eco Tips']
+      };
+      
+      setMessages(prev => [...prev, fallbackMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
-  };
-
-  // Generate AI response (placeholder - will be replaced with Gemini API)
-  const generateAIResponse = (userInput: string, productCtx?: any, userCtx?: any): ChatMessage => {
-    const lowerInput = userInput.toLowerCase();
-
-    // Eco comparison response
-    if (lowerInput.includes('compare') || lowerInput.includes('alternative')) {
-      return {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: '🔍 Here\'s an eco-friendly comparison based on your request:',
-        timestamp: new Date(),
-        responseType: 'eco_comparison',
-        data: {
-          products: [
-            {
-              name: 'Organic Option 🌿',
-              eco_score: 'A+',
-              carbon_footprint: '1.2 kg CO₂',
-              packaging: 'Biodegradable',
-              sustainability: 'Excellent'
-            },
-            {
-              name: 'Standard Option',
-              eco_score: 'C',
-              carbon_footprint: '3.1 kg CO₂',
-              packaging: 'Plastic',
-              sustainability: 'Fair'
-            }
-          ],
-          insights: [
-            '📉 60% lower carbon footprint',
-            '♻️ Sustainable packaging',
-            '🌱 Supports organic farming'
-          ]
-        },
-        suggestions: [
-          '🛒 Where to Buy',
-          '💰 Price Comparison',
-          '🌍 Environmental Impact',
-          '⭐ User Reviews'
-        ]
-      };
     }
-
-    // Stats response
-    if (lowerInput.includes('stats') || lowerInput.includes('footprint') || lowerInput.includes('carbon')) {
-      return {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: '📊 Your current eco-impact analysis:',
-        timestamp: new Date(),
-        responseType: 'data_table',
-        data: {
-          stats: {
-            total_scans: userCtx?.total_scans || 42,
-            carbon_saved: '127.5 kg CO₂',
-            eco_score: userCtx?.achievement_level || 'Expert',
-            rank: userCtx?.current_rank || 15
-          },
-          progress: [
-            { metric: 'Eco Scans', value: 85, max: 100 },
-            { metric: 'Carbon Savings', value: 72, max: 100 },
-            { metric: 'Sustainable Choices', value: 91, max: 100 }
-          ]
-        },
-        suggestions: [
-          '🎯 Set New Goals',
-          '🏆 View Achievements',
-          '📈 Monthly Report',
-          '🌱 Improvement Tips'
-        ]
-      };
-    }
-
-    // Default response
-    return {
-      id: Date.now().toString(),
-      type: 'ai',
-      content: `✨ I understand you're asking about "${userInput}". As your eco-smart assistant, I can help you make more sustainable choices!\n\n🌱 Based on your EcoSnap journey, I see you're already making great progress. Would you like me to analyze a specific product or help you discover eco-friendly alternatives?`,
-      timestamp: new Date(),
-      suggestions: [
-        '🔍 Scan New Product',
-        '📊 View Eco Dashboard',
-        '🎯 Set Sustainability Goals',
-        '💡 Get Eco Tips'
-      ]
-    };
   };
 
   // Handle suggestion clicks
@@ -198,7 +173,10 @@ export const InsenAI: React.FC<InsenAIProps> = ({
       initial={{ opacity: 0, scale: 0.9, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: 20 }}
-      className="fixed inset-4 z-50 md:inset-auto md:right-6 md:bottom-6 md:w-96 md:h-[600px]"
+      className="fixed inset-4 md:inset-auto md:right-6 md:bottom-6 md:w-96 md:h-[600px]"
+      style={{
+        zIndex: 1001 // Higher than the floating button
+      }}
     >
       {/* Glassmorphic Chat Container */}
       <div className="h-full bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden flex flex-col">
@@ -277,7 +255,9 @@ export const InsenAI: React.FC<InsenAIProps> = ({
               ) : (
                 <div className="max-w-[85%]">
                   <div className="bg-white/80 backdrop-blur-sm rounded-2xl rounded-bl-md px-4 py-3 shadow-lg border border-white/20">
-                    <div className="whitespace-pre-wrap text-gray-800">{message.content}</div>
+                    <div className="whitespace-pre-wrap text-gray-800">
+                      <FormattedMessage content={message.content} />
+                    </div>
                     
                     {/* Render special response types */}
                     {message.responseType === 'eco_comparison' && message.data && (

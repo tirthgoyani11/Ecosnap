@@ -7,6 +7,7 @@ import { NavBar } from "./components/NavBar";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { EnhancedThemeProvider } from "./components/EnhancedThemeProvider";
+import FloatingChatButton from "./components/FloatingChatButton";
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -136,6 +137,10 @@ const App = () => (
               {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            
+            {/* Global Floating Chat Button */}
+            <FloatingChatButton />
+            
             <Footer />
           </div>
         </BrowserRouter>

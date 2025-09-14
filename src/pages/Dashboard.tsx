@@ -1650,37 +1650,6 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
 
-        {/* Floating Action Menu */}
-        <motion.div
-          className="fixed bottom-6 right-6 z-50"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 1, type: "spring", stiffness: 200 }}
-        >
-          <div className="relative">
-            <motion.button
-              className="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-2xl flex items-center justify-center group"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            >
-              <motion.div
-                animate={{ rotate: [0, 180, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <Sparkles className="h-6 w-6" />
-              </motion.div>
-              
-              {/* Quick Action Tooltips */}
-              <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                <div className="bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                  Back to top ✨
-                </div>
-              </div>
-            </motion.button>
-          </div>
-        </motion.div>
-
         {/* Achievement Celebration */}
         <AnimatePresence>
           {showCelebration && (
