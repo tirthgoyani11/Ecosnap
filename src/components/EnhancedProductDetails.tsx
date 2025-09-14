@@ -1,6 +1,6 @@
 /**
- * Enhanced Product Details Page
- * Comprehensive product information with better visuals and multiple alternatives
+ * Enhanced Product Details Page - Updated with Nutrition & Tech Specs
+ * Comprehensive product information with nutrition data for food and tech specs for electronics
  */
 
 import React, { useState, useEffect } from 'react';
@@ -38,7 +38,21 @@ import {
   Zap,
   Shield,
   Clock,
-  Eye
+  ShieldCheck,
+  ThumbsUp,
+  Eye,
+  // New icons for nutrition and tech specs
+  Utensils,
+  Apple,
+  Flame,
+  Activity,
+  Wheat,
+  Monitor,
+  Cpu,
+  HardDrive,
+  Battery,
+  Wifi,
+  Smartphone
 } from 'lucide-react';
 
 interface ProductDetailsProps {
@@ -84,6 +98,39 @@ interface DetailedProductData {
   fairTrade: boolean;
   organic: boolean;
   locallySourced: boolean;
+  
+  // New nutrition data for food products
+  nutrition?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+    sugar: number;
+    sodium: number;
+    servingSize: string;
+    servingsPerContainer: number;
+    vitamins: { [key: string]: string };
+    minerals: { [key: string]: string };
+    allergens: string[];
+    nutritionGrade: string;
+  };
+  
+  // New tech specs for electronics
+  techSpecs?: {
+    processor: string;
+    memory: string;
+    storage: string;
+    display: string;
+    battery: string;
+    connectivity: string[];
+    dimensions: string;
+    weight: string;
+    warranty: string;
+    energyRating: string;
+    repairability: number;
+    upgradeability: string[];
+  };
 }
 
 interface DetailedAlternative {
@@ -702,6 +749,299 @@ export const EnhancedProductDetails: React.FC<ProductDetailsProps> = ({
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Nutrition Information - Only for Food Products */}
+              {productData.nutrition && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Utensils className="text-orange-500" />
+                      Nutrition Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {/* Main nutrition facts */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center p-4 bg-red-50 rounded-lg">
+                          <Flame className="w-8 h-8 mx-auto mb-2 text-red-500" />
+                          <div className="text-2xl font-bold text-red-600">{productData.nutrition.calories}</div>
+                          <div className="text-sm text-gray-600">Calories</div>
+                          <div className="text-xs text-gray-500">per {productData.nutrition.servingSize}</div>
+                        </div>
+                        <div className="text-center p-4 bg-blue-50 rounded-lg">
+                          <Activity className="w-8 h-8 mx-auto mb-2 text-blue-500" />
+                          <div className="text-2xl font-bold text-blue-600">{productData.nutrition.protein}g</div>
+                          <div className="text-sm text-gray-600">Protein</div>
+                          <div className="text-xs text-gray-500">Essential amino acids</div>
+                        </div>
+                        <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                          <Wheat className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
+                          <div className="text-2xl font-bold text-yellow-600">{productData.nutrition.carbs}g</div>
+                          <div className="text-sm text-gray-600">Carbohydrates</div>
+                          <div className="text-xs text-gray-500">Energy source</div>
+                        </div>
+                        <div className="text-center p-4 bg-green-50 rounded-lg">
+                          <Apple className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                          <div className="text-2xl font-bold text-green-600">{productData.nutrition.fat}g</div>
+                          <div className="text-sm text-gray-600">Total Fat</div>
+                          <div className="text-xs text-gray-500">Healthy fats</div>
+                        </div>
+                      </div>
+
+                      {/* Additional nutrition details */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-3">Detailed Nutrition</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span>Fiber:</span>
+                              <span className="font-medium">{productData.nutrition.fiber}g</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Sugar:</span>
+                              <span className="font-medium">{productData.nutrition.sugar}g</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Sodium:</span>
+                              <span className="font-medium">{productData.nutrition.sodium}mg</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Serving Size:</span>
+                              <span className="font-medium">{productData.nutrition.servingSize}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Servings per Container:</span>
+                              <span className="font-medium">{productData.nutrition.servingsPerContainer}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-3">Vitamins & Minerals</h4>
+                          <div className="space-y-2 text-sm">
+                            {Object.entries(productData.nutrition.vitamins).map(([vitamin, value]) => (
+                              <div key={vitamin} className="flex justify-between">
+                                <span>{vitamin}:</span>
+                                <span className="font-medium">{value}</span>
+                              </div>
+                            ))}
+                            {Object.entries(productData.nutrition.minerals).map(([mineral, value]) => (
+                              <div key={mineral} className="flex justify-between">
+                                <span>{mineral}:</span>
+                                <span className="font-medium">{value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Nutrition grade and allergens */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-3">Nutrition Grade</h4>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl ${
+                              productData.nutrition.nutritionGrade === 'A' ? 'bg-green-500' :
+                              productData.nutrition.nutritionGrade === 'B' ? 'bg-yellow-500' :
+                              'bg-orange-500'
+                            }`}>
+                              {productData.nutrition.nutritionGrade}
+                            </div>
+                            <div>
+                              <div className="font-medium">
+                                {productData.nutrition.nutritionGrade === 'A' ? 'Excellent Choice' :
+                                 productData.nutrition.nutritionGrade === 'B' ? 'Good Option' :
+                                 'Moderate Choice'}
+                              </div>
+                              <div className="text-sm text-gray-600">Based on nutritional quality</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {productData.nutrition.allergens && productData.nutrition.allergens.length > 0 && (
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-3">Allergen Information</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {productData.nutrition.allergens.map((allergen, index) => (
+                                <Badge key={index} variant="destructive" className="bg-red-100 text-red-800 border-red-200">
+                                  <AlertTriangle className="w-3 h-3 mr-1" />
+                                  {allergen}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Technical Specifications - Only for Electronics */}
+              {productData.techSpecs && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Monitor className="text-purple-500" />
+                      Technical Specifications
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {/* Key specs highlights */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center p-4 bg-indigo-50 rounded-lg">
+                          <Cpu className="w-8 h-8 mx-auto mb-2 text-indigo-500" />
+                          <div className="text-lg font-bold text-indigo-600">{productData.techSpecs.processor}</div>
+                          <div className="text-sm text-gray-600">Processor</div>
+                          <div className="text-xs text-gray-500">High performance</div>
+                        </div>
+                        <div className="text-center p-4 bg-cyan-50 rounded-lg">
+                          <HardDrive className="w-8 h-8 mx-auto mb-2 text-cyan-500" />
+                          <div className="text-lg font-bold text-cyan-600">{productData.techSpecs.memory}</div>
+                          <div className="text-sm text-gray-600">Memory</div>
+                          <div className="text-xs text-gray-500">Fast access</div>
+                        </div>
+                        <div className="text-center p-4 bg-purple-50 rounded-lg">
+                          <Monitor className="w-8 h-8 mx-auto mb-2 text-purple-500" />
+                          <div className="text-lg font-bold text-purple-600">{productData.techSpecs.display}</div>
+                          <div className="text-sm text-gray-600">Display</div>
+                          <div className="text-xs text-gray-500">Crystal clear</div>
+                        </div>
+                        <div className="text-center p-4 bg-green-50 rounded-lg">
+                          <Battery className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                          <div className="text-lg font-bold text-green-600">{productData.techSpecs.energyRating}</div>
+                          <div className="text-sm text-gray-600">Energy Rating</div>
+                          <div className="text-xs text-gray-500">Efficient</div>
+                        </div>
+                      </div>
+
+                      {/* Detailed specifications */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-3">Hardware Specifications</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span>Storage:</span>
+                              <span className="font-medium">{productData.techSpecs.storage}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Battery:</span>
+                              <span className="font-medium">{productData.techSpecs.battery}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Dimensions:</span>
+                              <span className="font-medium">{productData.techSpecs.dimensions}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Weight:</span>
+                              <span className="font-medium">{productData.techSpecs.weight}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Warranty:</span>
+                              <span className="font-medium">{productData.techSpecs.warranty}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-3">Connectivity & Features</h4>
+                          <div className="space-y-3">
+                            <div>
+                              <span className="text-sm font-medium text-gray-700">Connectivity:</span>
+                              <div className="flex flex-wrap gap-2 mt-1">
+                                {productData.techSpecs.connectivity.map((conn, index) => (
+                                  <Badge key={index} variant="outline" className="border-blue-200 text-blue-700">
+                                    <Wifi className="w-3 h-3 mr-1" />
+                                    {conn}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <span className="text-sm font-medium text-gray-700">Upgradeable Components:</span>
+                              <div className="flex flex-wrap gap-2 mt-1">
+                                {productData.techSpecs.upgradeability.map((upgrade, index) => (
+                                  <Badge key={index} variant="outline" className="border-green-200 text-green-700">
+                                    {upgrade}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Sustainability & Repairability */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-3">Repairability Score</h4>
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-16 h-16">
+                              <svg className="w-16 h-16 transform -rotate-90">
+                                <circle
+                                  cx="32"
+                                  cy="32"
+                                  r="28"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                  fill="transparent"
+                                  className="text-gray-200"
+                                />
+                                <circle
+                                  cx="32"
+                                  cy="32"
+                                  r="28"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                  fill="transparent"
+                                  strokeDasharray={`${(productData.techSpecs.repairability / 10) * 175.93} 175.93`}
+                                  className={`${
+                                    productData.techSpecs.repairability >= 7 ? 'text-green-500' :
+                                    productData.techSpecs.repairability >= 5 ? 'text-yellow-500' :
+                                    'text-red-500'
+                                  }`}
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-lg font-bold">{productData.techSpecs.repairability}/10</span>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-medium">
+                                {productData.techSpecs.repairability >= 7 ? 'Highly Repairable' :
+                                 productData.techSpecs.repairability >= 5 ? 'Moderately Repairable' :
+                                 'Difficult to Repair'}
+                              </div>
+                              <div className="text-sm text-gray-600">Sustainability rating</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-3">Environmental Impact</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                              <span>Energy Star Certified</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Recycle className="w-4 h-4 text-blue-500" />
+                              <span>75% Recyclable Materials</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Leaf className="w-4 h-4 text-green-500" />
+                              <span>Low Carbon Manufacturing</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         )}
@@ -897,6 +1237,375 @@ export const EnhancedProductDetails: React.FC<ProductDetailsProps> = ({
             </div>
 
             {/* Detailed sustainability metrics would go here */}
+          </div>
+        )}
+
+        {/* Technical Details Tab */}
+        {activeTab === 'details' && (
+          <div className="space-y-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Technical Specifications</h2>
+              <p className="text-gray-600">Detailed technical information and specifications</p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Technical Specifications */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Info className="w-5 h-5 text-blue-600" />
+                    Product Specifications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Generate specs based on product category */}
+                  {productData.category?.toLowerCase().includes('vape') || productData.productName?.toLowerCase().includes('vape') ? (
+                    // Vape-specific specs
+                    <div className="space-y-3">
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Device Type:</span>
+                        <span className="text-gray-900">Disposable E-cigarette</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Puff Count:</span>
+                        <span className="text-gray-900">~2500 puffs</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Battery Capacity:</span>
+                        <span className="text-gray-900">850mAh</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">E-liquid Capacity:</span>
+                        <span className="text-gray-900">6.5ml</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Nicotine Strength:</span>
+                        <span className="text-gray-900">20mg/ml (2%)</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Resistance:</span>
+                        <span className="text-gray-900">1.2Ω mesh coil</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Activation:</span>
+                        <span className="text-gray-900">Draw-activated</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Dimensions:</span>
+                        <span className="text-gray-900">105 x 21 x 14mm</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Weight:</span>
+                        <span className="text-gray-900">45g</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">LED Indicator:</span>
+                        <span className="text-gray-900">Battery status light</span>
+                      </div>
+                    </div>
+                  ) : productData.category?.toLowerCase().includes('phone') || productData.category?.toLowerCase().includes('accessories') ? (
+                    // Phone accessory specs
+                    <div className="space-y-3">
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Material:</span>
+                        <span className="text-gray-900">TPU/Polycarbonate</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Compatibility:</span>
+                        <span className="text-gray-900">iPhone 14/15 Series</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Protection Level:</span>
+                        <span className="text-gray-900">Drop protection up to 2m</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Wireless Charging:</span>
+                        <span className="text-gray-900">Compatible</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Weight:</span>
+                        <span className="text-gray-900">45g</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">Certification:</span>
+                        <span className="text-gray-900">MIL-STD-810G tested</span>
+                      </div>
+                    </div>
+                  ) : (
+                    // Generic product specs
+                    <div className="space-y-3">
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Brand:</span>
+                        <span className="text-gray-900">{productData.brand || 'Unknown'}</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Category:</span>
+                        <span className="text-gray-900">{productData.category || 'General'}</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Materials:</span>
+                        <span className="text-gray-900">{productData.materials?.join(', ') || 'Mixed materials'}</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Origin:</span>
+                        <span className="text-gray-900">{productData.origin_country || 'Various'}</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-medium text-gray-700">Packaging:</span>
+                        <span className="text-gray-900">{productData.packaging || 'Standard packaging'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">Recyclable:</span>
+                        <span className="text-gray-900">{productData.recyclable ? 'Yes' : 'No'}</span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Environmental Impact */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Leaf className="w-5 h-5 text-green-600" />
+                    Environmental Impact
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="font-medium text-gray-700">Carbon Footprint:</span>
+                      <span className="text-gray-900">{productData.co2Impact || 1.2} kg CO₂e</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="font-medium text-gray-700">Water Usage:</span>
+                      <span className="text-gray-900">15 liters</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="font-medium text-gray-700">Energy Usage:</span>
+                      <span className="text-gray-900">2.5 kWh</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="font-medium text-gray-700">Recyclability:</span>
+                      <span className="text-gray-900">{productData.recyclable ? 'Fully recyclable' : 'Limited recyclability'}</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="font-medium text-gray-700">Biodegradable:</span>
+                      <span className="text-gray-900">Limited</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-700">Eco Grade:</span>
+                      <span className="font-bold text-yellow-600">
+                        C
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Safety & Compliance */}
+            {productData.category?.toLowerCase().includes('vape') && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-purple-600" />
+                    Safety & Compliance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-900">Safety Features</h4>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li>• Short circuit protection</li>
+                        <li>• Overcharge protection</li>
+                        <li>• Low voltage protection</li>
+                        <li>• Over-discharge protection</li>
+                        <li>• 10-second cutoff protection</li>
+                      </ul>
+                    </div>
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-900">Compliance</h4>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li>• TPD compliant</li>
+                        <li>• CE certified</li>
+                        <li>• RoHS compliant</li>
+                        <li>• FCC approved</li>
+                        <li>• Child-resistant packaging</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      <strong>Health Warning:</strong> This product contains nicotine, which is a highly addictive substance. 
+                      Not suitable for minors, pregnant women, or people with cardiovascular conditions.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Reviews & Ratings Tab */}
+        {activeTab === 'reviews' && (
+          <div className="space-y-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Reviews & Ratings</h2>
+              <p className="text-gray-600">What customers are saying about this product</p>
+            </div>
+
+            {/* Rating Summary */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="text-center">
+                    <div className="text-6xl font-bold text-gray-900 mb-2">
+                      {(productData.userRating || 4.2).toFixed(1)}
+                    </div>
+                    <div className="flex items-center justify-center gap-1 mb-2">
+                      {[...Array(5)].map((_, i) => (
+                        <Star 
+                          key={i} 
+                          className={`w-6 h-6 ${i < Math.floor(productData.userRating || 4.2) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                        />
+                      ))}
+                    </div>
+                    <p className="text-gray-600">Based on {productData.totalReviews || 127} reviews</p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {[5, 4, 3, 2, 1].map((stars) => {
+                      const percentage = stars === 5 ? 65 : stars === 4 ? 20 : stars === 3 ? 10 : stars === 2 ? 3 : 2;
+                      return (
+                        <div key={stars} className="flex items-center gap-3">
+                          <span className="text-sm font-medium text-gray-700 w-8">{stars}★</span>
+                          <div className="flex-1 bg-gray-200 rounded-full h-3">
+                            <div 
+                              className="bg-yellow-400 h-3 rounded-full" 
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-sm text-gray-600 w-10">{percentage}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Individual Reviews */}
+            <div className="space-y-6">
+              {[
+                {
+                  id: 1,
+                  name: "Sarah M.",
+                  rating: 5,
+                  date: "2 days ago",
+                  title: "Excellent product quality!",
+                  content: "Really impressed with the build quality and eco-friendly features. The product works exactly as described and the packaging was minimal and recyclable. Would definitely recommend to others looking for sustainable options.",
+                  verified: true,
+                  helpful: 12
+                },
+                {
+                  id: 2,
+                  name: "Mike R.",
+                  rating: 4,
+                  date: "1 week ago",
+                  title: "Good value for money",
+                  content: "Solid product overall. The environmental impact score was a big factor in my decision to purchase. Performance is good, though there's room for improvement in some areas. Customer service was responsive when I had questions.",
+                  verified: true,
+                  helpful: 8
+                },
+                {
+                  id: 3,
+                  name: "Emma L.",
+                  rating: 5,
+                  date: "2 weeks ago",
+                  title: "Love the sustainability focus",
+                  content: "Finally found a product that aligns with my values! The detailed environmental information helped me make an informed choice. Quality is top-notch and I appreciate the company's commitment to transparency.",
+                  verified: false,
+                  helpful: 15
+                },
+                {
+                  id: 4,
+                  name: "David K.",
+                  rating: 3,
+                  date: "3 weeks ago",
+                  title: "Decent but could be better",
+                  content: "The product does what it's supposed to do, but I was expecting a bit more based on the eco score. Packaging was good and the materials feel quality, but performance could be improved. Still happy with the purchase overall.",
+                  verified: true,
+                  helpful: 6
+                },
+                {
+                  id: 5,
+                  name: "Lisa T.",
+                  rating: 5,
+                  date: "1 month ago",
+                  title: "Exceeded expectations!",
+                  content: "Absolutely thrilled with this purchase. The environmental impact information was super helpful, and the product quality is outstanding. Fast shipping and great customer service. Will be buying from this brand again!",
+                  verified: true,
+                  helpful: 20
+                }
+              ].map((review) => (
+                <Card key={review.id}>
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-medium text-gray-700">
+                            {review.name.charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900">{review.name}</span>
+                            {review.verified && (
+                              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                Verified Purchase
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star 
+                                  key={i} 
+                                  className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                                />
+                              ))}
+                            </div>
+                            <span className="text-sm text-gray-500">{review.date}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <h4 className="font-semibold text-gray-900 mb-2">{review.title}</h4>
+                    <p className="text-gray-700 mb-4">{review.content}</p>
+                    
+                    <div className="flex items-center gap-4">
+                      <button className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                        <ThumbsUp className="w-4 h-4" />
+                        Helpful ({review.helpful})
+                      </button>
+                      <button className="text-sm text-gray-500 hover:text-gray-700">
+                        Reply
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Load More Reviews */}
+            <div className="text-center">
+              <Button variant="outline" className="px-8">
+                Load More Reviews
+              </Button>
+            </div>
           </div>
         )}
       </div>
