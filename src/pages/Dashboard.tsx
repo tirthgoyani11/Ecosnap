@@ -136,7 +136,7 @@ Please respond with valid JSON only in this exact format:
 
 Keep responses encouraging, specific, and actionable. Focus on environmental impact and sustainability.`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
