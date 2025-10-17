@@ -76,9 +76,12 @@ export class GeminiProductAPI {
   }
 
   /**
-   * Call Gemini Vision API with improved prompting
+   * Call Gemini Vision API with improved prompting and retry logic
    */
-  private static async callGeminiVision(imageData: string): Promise<any> {
+  private static async callGeminiVision(imageData: string, retryCount = 0): Promise<any> {
+    const maxRetries = 3;
+    const baseDelay = 2000; // 2 seconds
+    
     try {
       if (this.GEMINI_API_KEY === 'demo-key') {
         console.log('🔶 Using demo mode - returning mock data');
@@ -146,7 +149,18 @@ Return ONLY valid JSON in this exact format:
       });
 
       if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
+        const errorData = await response.text();
+        
+        // Handle rate limiting with retry
+        if (response.status === 429 && retryCount < maxRetries) {
+          const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
+          console.warn(`⚠️ Rate limited. Retrying in ${delay/1000}s... (Attempt ${retryCount + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return this.callGeminiVision(imageData, retryCount + 1);
+        }
+        
+        console.error('❌ Gemini API error:', response.status, errorData);
+        throw new Error(`Gemini API error: ${response.status} - ${errorData}`);
       }
 
       const result = await response.json();

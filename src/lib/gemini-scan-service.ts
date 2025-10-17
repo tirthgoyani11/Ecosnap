@@ -95,9 +95,12 @@ export class GeminiScanService {
   }
 
   /**
-   * Call real Gemini Vision API
+   * Call real Gemini Vision API with retry logic
    */
-  private static async callGeminiVisionAPI(imageData: string): Promise<any> {
+  private static async callGeminiVisionAPI(imageData: string, retryCount = 0): Promise<any> {
+    const maxRetries = 3;
+    const baseDelay = 2000; // 2 seconds
+    
     try {
       // Check if we have a real API key
       if (this.GEMINI_API_KEY === 'demo-key') {
@@ -144,6 +147,15 @@ export class GeminiScanService {
 
       if (!response.ok) {
         const errorText = await response.text();
+        
+        // Handle rate limiting with retry
+        if (response.status === 429 && retryCount < maxRetries) {
+          const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
+          console.warn(`⚠️ Rate limited. Retrying in ${delay/1000}s... (Attempt ${retryCount + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return this.callGeminiVisionAPI(imageData, retryCount + 1);
+        }
+        
         console.error('Gemini API response:', {
           status: response.status,
           statusText: response.statusText,
