@@ -157,7 +157,7 @@ const calculateRealEcoScore = async (productData: any): Promise<EcoScoreBreakdow
     console.log('🤖 Using Gemini AI for eco-scoring...');
     
     // Try Gemini AI API for advanced analysis
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

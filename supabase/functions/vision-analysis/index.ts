@@ -1,4 +1,4 @@
-// Supabase Edge Function for Gemini 2.5 Flash Vision API
+// Supabase Edge Function for Gemini 2.0 Flash Vision API
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -45,9 +45,9 @@ serve(async (req) => {
       )
     }
 
-    // Call Gemini 2.5 Flash Vision API
+    // Call Gemini 2.0 Flash Vision API
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: {

@@ -105,9 +105,9 @@ export class GeminiScanService {
         return this.getMockGeminiResponse();
       }
 
-      console.log('📡 Calling real Gemini 2.5 Flash API...');
+      console.log('📡 Calling real Gemini 2.0 Flash API...');
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
