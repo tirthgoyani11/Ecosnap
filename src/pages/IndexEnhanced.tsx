@@ -105,14 +105,6 @@ export default function IndexEnhanced() {
   // For home page, we don't wait for auth loading - we show the page immediately
   const isAuthenticated = !loading && user;
 
-  // Enhanced statistics
-  const stats = [
-    { icon: Users, value: "10K+", label: "Active Users", color: "text-blue-400", change: "+23%" },
-    { icon: Scan, value: "50K+", label: "Products Scanned", color: "text-green-400", change: "+47%" },
-    { icon: Award, value: "1M+", label: "Points Earned", color: "text-purple-400", change: "+89%" },
-    { icon: Globe, value: "25+", label: "Countries", color: "text-orange-400", change: "+12%" }
-  ];
-
   const testimonials = [
     {
       name: "Tirth Goyani",
@@ -238,31 +230,6 @@ export default function IndexEnhanced() {
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-              </AnimatedElement>
-
-              {/* Live Stats with Animations */}
-              <AnimatedElement animation="fadeInUp" delay={1000}>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
-                  {stats.map((stat, index) => (
-                    <motion.div
-                      key={stat.label}
-                      className="text-center"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.2 + index * 0.1 }}
-                      whileHover={{ scale: 1.05 }}
-                    >
-                      <div className={`inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-background to-muted mb-3 ${stat.color}`}>
-                        <stat.icon className="h-6 w-6" />
-                      </div>
-                      <div className="flex items-center justify-center gap-1">
-                        <span className="text-2xl font-bold">{stat.value}</span>
-                        <span className="text-green-400 text-sm font-medium">{stat.change}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    </motion.div>
-                  ))}
-                </div>
               </AnimatedElement>
             </AnimatedElement>
           </div>
