@@ -33,6 +33,7 @@ import EcoLeaderboardUltimate from "./pages/EcoLeaderboardUltimate";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
+import Recycling from "./pages/Recycling";
 
 const App = () => (
   <EnhancedThemeProvider
@@ -122,6 +123,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <EcoLeaderboardUltimate />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/recycling" 
+                element={
+                  <ProtectedRoute>
+                    <Recycling />
                   </ProtectedRoute>
                 } 
               />

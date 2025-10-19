@@ -25,7 +25,8 @@ import {
   Heart,
   Star,
   Quote,
-  Verified
+  Verified,
+  Recycle
 } from "lucide-react";
 
 const features = [
@@ -65,11 +66,18 @@ const features = [
     stats: "Live updates"
   },
   {
+    icon: Recycle,
+    title: "Recycling Guide",
+    description: "Get detailed recycling instructions for each product, including local facility information and proper disposal methods.",
+    color: "bg-gradient-to-br from-emerald-400 to-teal-300",
+    stats: "Eco-friendly disposal"
+  },
+  {
     icon: Users,
     title: "Community Driven",
     description: "Join a growing community of eco-conscious consumers making informed choices together.",
     color: "bg-gradient-to-br from-pink-400 to-rose-300",
-    stats: "10K+ members"
+    stats: "Active community"
   }
 ];
 
