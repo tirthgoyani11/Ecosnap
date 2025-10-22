@@ -66,6 +66,14 @@ const features = [
     stats: "Live updates"
   },
   {
+    icon: Sparkles,
+    title: "ScanIQ - Smart Scanner",
+    description: "Advanced barcode & QR scanner with AI-powered alternatives, insights, and instant product information. Get smart recommendations and discover better options.",
+    color: "bg-gradient-to-br from-blue-500 to-purple-500",
+    stats: "AI-powered insights",
+    href: "/scaniq"
+  },
+  {
     icon: Recycle,
     title: "Recycling Guide",
     description: "Get detailed recycling instructions for each product, including local facility information and proper disposal methods.",
@@ -320,27 +328,29 @@ export default function IndexEnhanced() {
 
           <StaggeredGrid className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <FeatureTile
-                  icon={feature.icon}
-                  title={feature.title}
-                  description={feature.description}
-                  className="h-full hover:shadow-xl transition-all duration-300"
-                />
-                <motion.div 
-                  className="mt-2 text-center text-sm font-medium text-primary"
-                  initial={{ opacity: 0 }}
-                  whileHover={{ opacity: 1 }}
-                  transition={{ duration: 0.2 }}
+              <Link key={feature.title} to={feature.href || '#'}>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className="cursor-pointer"
                 >
-                  {feature.stats}
+                  <FeatureTile
+                    icon={feature.icon}
+                    title={feature.title}
+                    description={feature.description}
+                    className="h-full hover:shadow-xl transition-all duration-300"
+                  />
+                  <motion.div 
+                    className="mt-2 text-center text-sm font-medium text-primary"
+                    initial={{ opacity: 0 }}
+                    whileHover={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {feature.stats}
+                  </motion.div>
                 </motion.div>
-              </motion.div>
+              </Link>
             ))}
           </StaggeredGrid>
         </div>

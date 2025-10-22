@@ -34,6 +34,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
 import Recycling from "./pages/Recycling";
+import ScanIQPage from "./pages/ScanIQPage";
 
 const App = () => (
   <EnhancedThemeProvider
@@ -131,6 +132,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Recycling />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/scaniq" 
+                element={
+                  <ProtectedRoute>
+                    <ScanIQPage />
                   </ProtectedRoute>
                 } 
               />

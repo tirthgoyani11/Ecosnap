@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Scan, Zap, User, LogOut, Settings, Search, Trophy, Recycle } from "lucide-react";
+import { Menu, X, Scan, Zap, User, LogOut, Settings, Search, Trophy, Recycle, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 const authenticatedNavItems = [
   { name: "Home", href: "/", icon: Zap },
   { name: "Scanner", href: "/scanner", icon: Scan },
+  { name: "ScanIQ", href: "/scaniq", icon: Sparkles },
   { name: "Bulk Scan", href: "/bulk", icon: Menu },
   { name: "Dashboard", href: "/dashboard", icon: Zap },
   { name: "Discover", href: "/discover", icon: Search },
