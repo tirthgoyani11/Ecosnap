@@ -342,10 +342,77 @@ Return ONLY the code/content, nothing else:`;
               .trim();
             
             setInputValue(cleanCode);
+            
+            // Show detection toast
             toast({
               title: "📷 Code Detected!",
-              description: `Found: ${cleanCode.substring(0, 30)}${cleanCode.length > 30 ? '...' : ''}`,
+              description: `Found: ${cleanCode.substring(0, 30)}${cleanCode.length > 30 ? '...' : ''}. Scanning...`,
             });
+            
+            // Auto-trigger scan after detection
+            setTimeout(async () => {
+              // Manually trigger the scan with the detected code
+              try {
+                const codeType = detectCodeType(cleanCode);
+                
+                if (codeType === 'barcode') {
+                  const productData = await fetchBarcodeDetails(cleanCode);
+                  if (!productData) {
+                    throw new Error('Product not found');
+                  }
+
+                  const aiAnalysis = await analyzeWithAI(
+                    productData.productName,
+                    productData.brand,
+                    'product'
+                  );
+
+                  const result: ScanResult = {
+                    type: 'barcode',
+                    code: cleanCode,
+                    ...productData,
+                    alternatives: aiAnalysis?.alternatives || [],
+                    relatedProducts: aiAnalysis?.relatedProducts || [],
+                    sustainability: aiAnalysis?.sustainability
+                  };
+
+                  setScanResult(result);
+                  setActiveTab('details');
+
+                  toast({
+                    title: "✅ Product Found!",
+                    description: `${productData.productName} by ${productData.brand}`
+                  });
+
+                } else {
+                  const qrData = await decodeQRCode(cleanCode);
+
+                  const result: ScanResult = {
+                    type: 'qrcode',
+                    code: cleanCode,
+                    ...qrData,
+                    productName: qrData.summary || 'QR Code Content',
+                    description: qrData.summary
+                  };
+
+                  setScanResult(result);
+                  setActiveTab('details');
+
+                  toast({
+                    title: "✅ QR Code Decoded!",
+                    description: "Content analyzed successfully"
+                  });
+                }
+              } catch (error) {
+                console.error('Auto-scan error:', error);
+                toast({
+                  title: "❌ Scan Failed",
+                  description: "Could not process the detected code.",
+                  variant: "destructive"
+                });
+              }
+            }, 500); // Small delay to show the detection message first
+            
           } else {
             throw new Error('No code detected');
           }
