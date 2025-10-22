@@ -281,25 +281,76 @@ Respond in JSON format with: type, summary, insights (array of strings)`;
         const base64Image = reader.result as string;
         
         // Use Gemini Vision API to detect barcode/QR code
-        const prompt = `Analyze this image and extract any barcode numbers or QR code content. 
-        If you find a barcode (EAN, UPC), return just the numeric code.
-        If you find a QR code, return the decoded text content.
-        Respond with just the code/content, nothing else.`;
+        const prompt = `CRITICAL: Analyze this image and extract ONLY the barcode number or QR code content.
+
+INSTRUCTIONS:
+1. Look for barcodes (EAN-13, EAN-8, UPC-A, UPC-E) - these are numeric codes typically 8-14 digits
+2. Look for QR codes - these contain URLs, text, or other data
+3. Extract the EXACT code/content you see
+4. Return ONLY the extracted code with NO additional text, explanation, or formatting
+
+EXAMPLES:
+- If barcode shows: 3017620422003 → Return: 3017620422003
+- If QR contains: https://example.com → Return: https://example.com
+- If QR contains text → Return: the exact text
+
+Return ONLY the code/content, nothing else:`;
 
         try {
-          const response = await Gemini.generateText(prompt);
-          const detectedCode = response.trim();
+          // Create proper Gemini Vision API request
+          const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+          const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
           
-          if (detectedCode) {
-            setInputValue(detectedCode);
+          const requestBody = {
+            contents: [{
+              parts: [
+                { text: prompt },
+                { 
+                  inline_data: { 
+                    mime_type: file.type || "image/jpeg", 
+                    data: base64Image.split(',')[1] 
+                  } 
+                }
+              ]
+            }],
+            generationConfig: {
+              temperature: 0.1, // Very low for accurate text extraction
+              maxOutputTokens: 100,
+            }
+          };
+
+          const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+          });
+
+          if (!response.ok) {
+            throw new Error('Gemini API request failed');
+          }
+
+          const data = await response.json();
+          const detectedCode = data.candidates[0]?.content.parts[0]?.text.trim();
+          
+          if (detectedCode && detectedCode.length > 3) {
+            // Clean up the response - remove any markdown, quotes, or extra text
+            let cleanCode = detectedCode
+              .replace(/```/g, '')
+              .replace(/`/g, '')
+              .replace(/^["']|["']$/g, '')
+              .replace(/^Code:|^Barcode:|^QR Code:/gi, '')
+              .trim();
+            
+            setInputValue(cleanCode);
             toast({
               title: "📷 Code Detected!",
-              description: "Click Scan to analyze"
+              description: `Found: ${cleanCode.substring(0, 30)}${cleanCode.length > 30 ? '...' : ''}`,
             });
           } else {
             throw new Error('No code detected');
           }
         } catch (error) {
+          console.error('Image detection error:', error);
           toast({
             title: "Could not detect code",
             description: "Please try a clearer image or enter manually",
@@ -309,6 +360,7 @@ Respond in JSON format with: type, summary, insights (array of strings)`;
       };
       reader.readAsDataURL(file);
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
         description: "Could not process image",
