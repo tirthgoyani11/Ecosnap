@@ -45,6 +45,77 @@ import {
   BarChart3
 } from "lucide-react";
 
+// Helper utilities to robustly extract and parse JSON from LLM responses
+function extractJsonBlock(text: string): string | null {
+  if (!text) return null;
+  // Prefer fenced code block first (```json ... ``` or ``` ... ```)
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenceMatch && fenceMatch[1]) {
+    return fenceMatch[1];
+  }
+  // Fallback: attempt to capture from first { or [ to the last } or ]
+  const firstCurly = text.indexOf("{");
+  const firstBracket = text.indexOf("[");
+  let start = -1;
+  if (firstCurly === -1 && firstBracket === -1) return null;
+  if (firstCurly === -1) start = firstBracket; else if (firstBracket === -1) start = firstCurly; else start = Math.min(firstCurly, firstBracket);
+  // Choose matching end
+  const lastCurly = text.lastIndexOf("}");
+  const lastBracket = text.lastIndexOf("]");
+  let end = Math.max(lastCurly, lastBracket);
+  if (start >= 0 && end > start) {
+    return text.slice(start, end + 1);
+  }
+  return null;
+}
+
+function cleanJsonForParse(jsonLike: string): string {
+  let s = jsonLike ?? "";
+  // Normalize newlines
+  s = s.replace(/\r/g, "");
+  // Remove JS-style comments
+  s = s.replace(/\/\*[\s\S]*?\*\//g, "");
+  s = s.replace(/(^|\n)\s*\/\/.*(?=\n|$)/g, "\n");
+  // Replace fancy quotes with straight quotes
+  s = s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+  // Remove trailing commas before } or ]
+  s = s.replace(/,\s*(?=[}\]])/g, "");
+  // Trim code-fence remnants if any
+  s = s.replace(/```json\n?|```/g, "");
+  return s.trim();
+}
+
+function parseJsonWithRoot<T = any>(text: string, rootKey?: string): { root: T | null, rawObject: any | null } {
+  const block = extractJsonBlock(text);
+  if (!block) return { root: null, rawObject: null };
+  const cleaned = cleanJsonForParse(block);
+  try {
+    const obj = JSON.parse(cleaned);
+    if (!rootKey) return { root: obj as T, rawObject: obj };
+    if (Array.isArray(obj) && rootKey) {
+      // If the whole parsed value is the array we want
+      return { root: obj as unknown as T, rawObject: obj };
+    }
+    if (obj && typeof obj === 'object' && rootKey in obj) {
+      return { root: (obj as any)[rootKey] as T, rawObject: obj };
+    }
+  } catch (_e) {
+    // Try to directly capture the array/object under the root key
+    if (rootKey) {
+      const re = new RegExp(`"${rootKey}"\s*:\s*([\n\r\s\S]*?)\n?([,}])`);
+      const m = cleaned.match(re);
+      if (m && m[1]) {
+        const candidate = cleanJsonForParse(m[1]);
+        try {
+          const val = JSON.parse(candidate);
+          return { root: val as T, rawObject: { [rootKey]: val } };
+        } catch { /* ignore */ }
+      }
+    }
+  }
+  return { root: null, rawObject: null };
+}
+
 // Enhanced Product Interface
 interface EnhancedProduct {
   id: string;
@@ -178,23 +249,13 @@ class RealTimeSearch {
 
     try {
       const geminiResponse = await Gemini.generateText(prompt);
-      
-      if (!geminiResponse) {
-        throw new Error('No response from Gemini');
-      }
+      if (!geminiResponse) throw new Error('No response from Gemini');
 
-      // Extract JSON from response
-      const jsonMatch = geminiResponse.match(/```json\n([\s\S]*?)\n```/) || 
-                      geminiResponse.match(/\{[\s\S]*\}/);
-      
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
-      }
-
-      const data = JSON.parse(jsonMatch[0].replace(/```json\n?|\n?```/g, ''));
+      const { root: productItems } = parseJsonWithRoot<any[]>(geminiResponse, 'products');
+      const rawList: any[] = Array.isArray(productItems) ? productItems : [];
       const products: EnhancedProduct[] = [];
 
-      for (const productData of data.products || []) {
+      for (const productData of rawList) {
         // Get real image from Enhanced Image Search using search terms
         const searchTerms = productData.search_terms || 
                           `${productData.name} ${productData.category} sustainable eco product`;
@@ -283,15 +344,11 @@ class ProductGenerator {
         Make prices realistic for Indian market. Include Indian brands where appropriate.`;
 
         const geminiResponse = await Gemini.generateText(prompt);
-        
         if (geminiResponse) {
-          const jsonMatch = geminiResponse.match(/```json\n([\s\S]*?)\n```/) || 
-                          geminiResponse.match(/\{[\s\S]*\}/);
-          
-          if (jsonMatch) {
-            const data = JSON.parse(jsonMatch[0].replace(/```json\n?|\n?```/g, ''));
-            
-            for (const productData of data.products || []) {
+          const { root: productItems } = parseJsonWithRoot<any[]>(geminiResponse, 'products');
+          const list: any[] = Array.isArray(productItems) ? productItems : [];
+
+          for (const productData of list) {
               // Get real image from Enhanced Image Search
               const images = await EnhancedImageService.searchImages(
                 `${productData.name} ${category} sustainable eco-friendly product`,
@@ -334,7 +391,6 @@ class ProductGenerator {
 
               products.push(product);
             }
-          }
         }
       } catch (error) {
         console.error(`Failed to generate products for ${category}:`, error);
@@ -384,20 +440,10 @@ Make prices realistic based on each platform's strategy. Include 4-6 platforms w
 Return ONLY valid JSON, no explanations.`;
 
       const response = await Gemini.generateText(comparisonPrompt);
-      
-      if (!response) {
-        throw new Error('No response from Gemini');
-      }
+      if (!response) throw new Error('No response from Gemini');
 
-      const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/) || 
-                      response.match(/\{[\s\S]*\}/);
-      
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
-      }
-
-      const data = JSON.parse(jsonMatch[0].replace(/```json\n?|\n?```/g, ''));
-      let comparisons = data.comparisons || [];
+      const { root: comparisonsRoot } = parseJsonWithRoot<any[]>(response, 'comparisons');
+      let comparisons = Array.isArray(comparisonsRoot) ? comparisonsRoot : [];
       
       // Sort by price (lowest first) and mark best deal
       comparisons.sort((a: any, b: any) => a.price - b.price);
