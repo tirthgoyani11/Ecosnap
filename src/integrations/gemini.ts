@@ -18,7 +18,10 @@ interface GeminiAnalysis {
 export class Gemini {
   private static API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
   // Use a single, modern endpoint for both Vision and Text
-  private static API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+  private static API_URL = (() => {
+    const model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
+    return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  })();
 
   private static async makeApiCall(body: any): Promise<any> {
     if (!this.API_KEY) {
