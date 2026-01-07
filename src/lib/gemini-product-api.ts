@@ -88,14 +88,8 @@ export class GeminiProductAPI {
         return this.getMockGeminiResponse();
       }
 
-      const model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-goog-api-key': this.GEMINI_API_KEY
-        },
-        body: JSON.stringify({
+      const { geminiGenerate } = await import('@/lib/gemini-client');
+      const response = await geminiGenerate({
           contents: [{
             parts: [
               {
@@ -196,23 +190,23 @@ Return ONLY valid JSON in this exact format:
   private static getMockGeminiResponse(): any {
     const mockProducts = [
       {
-        productName: 'Organic Coconut Oil',
-        brand: 'Nature\'s Best',
+        productName: 'Organic Beef Stock Cubes 8 Pack',
+        brand: 'Kallo',
         category: 'Food & Beverages',
-        ingredients: ['Organic Coconut Oil', 'Natural Flavor'],
-        certifications: ['USDA Organic', 'Fair Trade', 'Non-GMO'],
-        healthScore: 88,
-        environmentalImpact: 'Low environmental impact with sustainable packaging',
+        ingredients: ['Sea Salt', 'Vegetable Oils', 'Organic Vegetables', 'Organic Beef Extract'],
+        certifications: ['Organic', 'Non-GMO'],
+        healthScore: 75,
+        environmentalImpact: 'Moderate impact; recycle cardboard outer box',
         recommendations: [
-          'Store in cool, dry place',
-          'Recyclable glass container',
-          'Support sustainable farming practices'
+          'Recycle cardboard packaging',
+          'Prefer lower-sodium options',
+          'Choose palm-oil-free variants where available'
         ],
         sustainability: {
-          packaging: 85,
-          materials: 90,
-          manufacturing: 78,
-          transport: 72
+          packaging: 72,
+          materials: 68,
+          manufacturing: 70,
+          transport: 65
         }
       },
       {

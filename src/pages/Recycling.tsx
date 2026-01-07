@@ -361,13 +361,8 @@ export default function RecyclingPage() {
         }
       };
 
-      const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-      const MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
+      const { geminiGenerate } = await import('@/lib/gemini-client');
+      const response = await geminiGenerate(requestBody);
 
       if (!response.ok) throw new Error('API request failed');
 

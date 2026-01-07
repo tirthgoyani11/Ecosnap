@@ -47,7 +47,7 @@ serve(async (req) => {
 
     // Call Gemini Flash Vision API
     const GEMINI_MODEL = Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.5-flash'
-    const geminiResponse = await fetch(
+    let geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
@@ -89,6 +89,50 @@ serve(async (req) => {
         }),
       }
     )
+
+    if (!geminiResponse.ok && geminiResponse.status === 400 && GEMINI_MODEL !== 'gemini-2.0-flash') {
+      // Fallback to 2.0 if configured model is unsupported
+      geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Analyze this product image and extract the following information in JSON format:
+                  {
+                    "product_name": "exact product name",
+                    "brand": "brand name if visible",
+                    "category": "product category",
+                    "confidence": "confidence level 0-1",
+                    "ingredients": ["list of ingredients if visible"],
+                    "materials": ["packaging materials"],
+                    "packaging": ["packaging types"]
+                  }
+                  Focus on sustainability-relevant details like materials, packaging, and ingredients.`
+                  },
+                  {
+                    inline_data: {
+                      mime_type: type === 'base64' ? 'image/jpeg' : 'image/jpeg',
+                      data: image
+                    }
+                  }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              topK: 1,
+              topP: 1,
+              maxOutputTokens: 2048,
+            },
+          }),
+        }
+      )
+    }
 
     const geminiData = await geminiResponse.json()
     

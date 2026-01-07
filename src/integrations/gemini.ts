@@ -16,32 +16,15 @@ interface GeminiAnalysis {
 }
 
 export class Gemini {
-  private static API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-  // Use a single, modern endpoint for both Vision and Text
-  private static API_URL = (() => {
-    const model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
-    return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-  })();
-
   private static async makeApiCall(body: any): Promise<any> {
-    if (!this.API_KEY) {
-      throw new Error("VITE_GEMINI_API_KEY is not set in the .env file.");
-    }
-
-    const response = await fetch(`${this.API_URL}?key=${this.API_KEY}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-
+    const { geminiGenerate } = await import('@/lib/gemini-client');
+    const response = await geminiGenerate(body);
     if (!response.ok) {
-      const errorBody = await response.json();
-      console.error("Gemini API Error:", errorBody);
+      let errorBody: any = undefined;
+      try { errorBody = await response.json(); } catch {}
+      console.error('Gemini API Error:', errorBody || response.statusText);
       throw new Error(`Gemini API request failed with status ${response.status}`);
     }
-
     return response.json();
   }
 

@@ -240,7 +240,7 @@ async function generateAIAlternatives(input: AlternativeRequest, apiKey: string)
   Focus on real, sustainable alternatives that are actually better for the environment.`
 
   const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.5-flash'
-  const response = await fetch(
+  let response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
       method: 'POST',
@@ -256,6 +256,25 @@ async function generateAIAlternatives(input: AlternativeRequest, apiKey: string)
       }),
     }
   )
+
+  if (!response.ok && response.status === 400 && model !== 'gemini-2.0-flash') {
+    response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.3,
+            topK: 1,
+            topP: 1,
+            maxOutputTokens: 2048,
+          },
+        }),
+      }
+    )
+  }
 
   const data = await response.json()
   const content = data.candidates?.[0]?.content?.parts?.[0]?.text

@@ -136,13 +136,8 @@ Please respond with valid JSON only in this exact format:
 
 Keep responses encouraging, specific, and actionable. Focus on environmental impact and sustainability.`;
 
-    const model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const { geminiGenerate } = await import('@/lib/gemini-client');
+    const response = await geminiGenerate({
         contents: [{
           parts: [{
             text: prompt
@@ -154,8 +149,7 @@ Keep responses encouraging, specific, and actionable. Focus on environmental imp
           topP: 0.95,
           maxOutputTokens: 1024,
         }
-      })
-    });
+      });
 
     if (!response.ok) {
       throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);

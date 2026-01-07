@@ -46,6 +46,7 @@ npm run build
 Environment
 - Copy `.env.example` to `.env` and fill values that apply to your setup.
 - Keep `.env` private; it's ignored by git.
+- For Gemini, set `VITE_GEMINI_API_KEY` and optionally `VITE_GEMINI_MODEL` (defaults to `gemini-2.5-flash`).
 ## Demo script (2–3 minutes)
 1. Open Scanner → live camera or image upload → get score + highlights.
 2. Tap AR Preview → see floating score and facts overlay.
