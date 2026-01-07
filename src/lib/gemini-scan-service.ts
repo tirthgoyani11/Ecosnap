@@ -189,23 +189,23 @@ export class GeminiScanService {
     // Mock Gemini Vision response with varied products
     const mockProducts = [
       {
-        productName: 'Organic Beef Stock Cubes 8 Pack',
+        productName: 'Organic Vegetable Stock Cubes 8 Pack',
         brand: 'Kallo',
         category: 'Food & Beverages',
-        ingredients: ['Sea Salt', 'Vegetable Oils', 'Organic Vegetables', 'Organic Beef Extract'],
-        certifications: ['Organic', 'Non-GMO'],
-        healthScore: 75,
-        environmentalImpact: 'Moderate impact; choose organic and recycle outer box',
+        ingredients: ['Sea Salt', 'Vegetable Oils', 'Organic Vegetables', 'Yeast Extract', 'Herbs & Spices'],
+        certifications: ['Organic', 'Non-GMO', 'Vegan', 'Vegetarian'],
+        healthScore: 82,
+        environmentalImpact: 'Low impact; plant-based and organic ingredients, recycle outer box',
         recommendations: [
           'Recycle cardboard outer packaging',
           'Consider low-sodium options',
           'Look for palm-oil-free variants'
         ],
         sustainability: {
-          packaging: 72,
-          materials: 68,
-          manufacturing: 70,
-          transport: 65
+          packaging: 78,
+          materials: 85,
+          manufacturing: 75,
+          transport: 70
         }
       },
       {

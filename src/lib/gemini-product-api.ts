@@ -190,23 +190,23 @@ Return ONLY valid JSON in this exact format:
   private static getMockGeminiResponse(): any {
     const mockProducts = [
       {
-        productName: 'Organic Beef Stock Cubes 8 Pack',
+        productName: 'Organic Vegetable Stock Cubes 8 Pack',
         brand: 'Kallo',
         category: 'Food & Beverages',
-        ingredients: ['Sea Salt', 'Vegetable Oils', 'Organic Vegetables', 'Organic Beef Extract'],
-        certifications: ['Organic', 'Non-GMO'],
-        healthScore: 75,
-        environmentalImpact: 'Moderate impact; recycle cardboard outer box',
+        ingredients: ['Sea Salt', 'Vegetable Oils', 'Organic Vegetables', 'Yeast Extract', 'Herbs & Spices'],
+        certifications: ['Organic', 'Non-GMO', 'Vegan', 'Vegetarian'],
+        healthScore: 82,
+        environmentalImpact: 'Low impact; plant-based and organic ingredients, recycle cardboard outer box',
         recommendations: [
           'Recycle cardboard packaging',
           'Prefer lower-sodium options',
           'Choose palm-oil-free variants where available'
         ],
         sustainability: {
-          packaging: 72,
-          materials: 68,
-          manufacturing: 70,
-          transport: 65
+          packaging: 78,
+          materials: 85,
+          manufacturing: 75,
+          transport: 70
         }
       },
       {
