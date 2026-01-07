@@ -299,7 +299,8 @@ Return ONLY the code/content, nothing else:`;
         try {
           // Create proper Gemini Vision API request
           const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-          const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+          const MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
+          const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
           
           const requestBody = {
             contents: [{

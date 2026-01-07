@@ -26,7 +26,10 @@ interface UserEcoStats {
 
 export class InsenAIService {
   private apiKey: string;
-  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  private baseUrl = (() => {
+    const model = (import.meta as any).env?.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
+    return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  })();
 
   constructor() {
     // In production, this should be stored in environment variables

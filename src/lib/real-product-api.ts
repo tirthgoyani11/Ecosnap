@@ -178,7 +178,8 @@ export class RealProductAPI {
         Respond with JSON: {"score": number, "grade": "A-F", "reasoning": "brief explanation"}
       `;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+      const model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
