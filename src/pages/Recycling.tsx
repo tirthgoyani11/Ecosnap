@@ -25,6 +25,54 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
+// Robust JSON extraction helpers
+function extractJsonBlock(text: string): string | null {
+  if (!text) return null;
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenceMatch && fenceMatch[1]) return fenceMatch[1];
+  
+  const firstCurly = text.indexOf("{");
+  const firstBracket = text.indexOf("[");
+  let start = -1;
+  if (firstCurly === -1 && firstBracket === -1) return null;
+  if (firstCurly === -1) start = firstBracket;
+  else if (firstBracket === -1) start = firstCurly;
+  else start = Math.min(firstCurly, firstBracket);
+  
+  const lastCurly = text.lastIndexOf("}");
+  const lastBracket = text.lastIndexOf("]");
+  const end = Math.max(lastCurly, lastBracket);
+  
+  if (start >= 0 && end > start) {
+    return text.slice(start, end + 1);
+  }
+  return null;
+}
+
+function cleanJsonForParse(jsonLike: string): string {
+  let s = jsonLike ?? "";
+  s = s.replace(/\r/g, "");
+  s = s.replace(/\/\*[\s\S]*?\*\//g, "");
+  s = s.replace(/(^|\n)\s*\/\/.*(?=\n|$)/g, "\n");
+  s = s.replace(/[""]/g, '"').replace(/['']/g, "'");
+  s = s.replace(/,\s*(?=[}\]])/g, "");
+  s = s.replace(/```json\n?|```/g, "");
+  return s.trim();
+}
+
+function parseAiJsonResponse<T = any>(text: string): T | null {
+  try {
+    const block = extractJsonBlock(text);
+    if (!block) return null;
+    const cleaned = cleanJsonForParse(block);
+    return JSON.parse(cleaned) as T;
+  } catch (error) {
+    console.error('Failed to parse AI JSON:', error);
+    return null;
+  }
+}
+
+
 // Sample recycling database
 const recyclingDatabase = {
   'plastic bottle': {
@@ -305,18 +353,8 @@ export default function RecyclingPage() {
     const response = await Gemini.generateText(prompt);
     if (!response) return null;
 
-    try {
-      // Extract JSON from response
-      const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/) || response.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const jsonStr = jsonMatch[1] || jsonMatch[0];
-        return JSON.parse(jsonStr);
-      }
-      return JSON.parse(response);
-    } catch (error) {
-      console.error('Failed to parse AI response:', error);
-      return null;
-    }
+    const parsed = parseAiJsonResponse(response);
+    return parsed;
   };
 
   const analyzeImageWithAI = async (base64Image: string) => {
@@ -371,13 +409,8 @@ export default function RecyclingPage() {
 
       if (!responseText) return null;
 
-      const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/) || responseText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const jsonStr = jsonMatch[1] || jsonMatch[0];
-        return JSON.parse(jsonStr);
-      }
-      
-      return JSON.parse(responseText);
+      const parsed = parseAiJsonResponse(responseText);
+      return parsed;
     } catch (error) {
       console.error('Image AI analysis error:', error);
       return null;

@@ -6,6 +6,53 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Robust JSON extraction helpers
+function extractJsonBlock(text: string): string | null {
+  if (!text) return null;
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenceMatch && fenceMatch[1]) return fenceMatch[1];
+  
+  const firstCurly = text.indexOf("{");
+  const firstBracket = text.indexOf("[");
+  let start = -1;
+  if (firstCurly === -1 && firstBracket === -1) return null;
+  if (firstCurly === -1) start = firstBracket;
+  else if (firstBracket === -1) start = firstCurly;
+  else start = Math.min(firstCurly, firstBracket);
+  
+  const lastCurly = text.lastIndexOf("}");
+  const lastBracket = text.lastIndexOf("]");
+  const end = Math.max(lastCurly, lastBracket);
+  
+  if (start >= 0 && end > start) {
+    return text.slice(start, end + 1);
+  }
+  return null;
+}
+
+function cleanJsonForParse(jsonLike: string): string {
+  let s = jsonLike ?? "";
+  s = s.replace(/\r/g, "");
+  s = s.replace(/\/\*[\s\S]*?\*\//g, "");
+  s = s.replace(/(^|\n)\s*\/\/.*(?=\n|$)/g, "\n");
+  s = s.replace(/[""]/g, '"').replace(/['']/g, "'");
+  s = s.replace(/,\s*(?=[}\]])/g, "");
+  s = s.replace(/```json\n?|```/g, "");
+  return s.trim();
+}
+
+function parseAiJsonResponse<T = any>(text: string): T | null {
+  try {
+    const block = extractJsonBlock(text);
+    if (!block) return null;
+    const cleaned = cleanJsonForParse(block);
+    return JSON.parse(cleaned) as T;
+  } catch (error) {
+    console.error('Failed to parse AI JSON:', error);
+    return null;
+  }
+}
+
 interface AlternativeRequest {
   product_name: string
   brand?: string
@@ -279,10 +326,11 @@ async function generateAIAlternatives(input: AlternativeRequest, apiKey: string)
   const data = await response.json()
   const content = data.candidates?.[0]?.content?.parts?.[0]?.text
 
-  try {
-    const jsonMatch = content.match(/\[[\s\S]*\]/)
-    return JSON.parse(jsonMatch ? jsonMatch[0] : content)
-  } catch {
-    return generateAlternatives(input)
+  const parsed = parseAiJsonResponse<any[]>(content);
+  if (parsed && Array.isArray(parsed)) {
+    return parsed;
   }
+  
+  // Fallback to generated alternatives
+  return generateAlternatives(input);
 }

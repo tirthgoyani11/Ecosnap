@@ -7,6 +7,53 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Robust JSON extraction helpers
+function extractJsonBlock(text: string): string | null {
+  if (!text) return null;
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenceMatch && fenceMatch[1]) return fenceMatch[1];
+  
+  const firstCurly = text.indexOf("{");
+  const firstBracket = text.indexOf("[");
+  let start = -1;
+  if (firstCurly === -1 && firstBracket === -1) return null;
+  if (firstCurly === -1) start = firstBracket;
+  else if (firstBracket === -1) start = firstCurly;
+  else start = Math.min(firstCurly, firstBracket);
+  
+  const lastCurly = text.lastIndexOf("}");
+  const lastBracket = text.lastIndexOf("]");
+  const end = Math.max(lastCurly, lastBracket);
+  
+  if (start >= 0 && end > start) {
+    return text.slice(start, end + 1);
+  }
+  return null;
+}
+
+function cleanJsonForParse(jsonLike: string): string {
+  let s = jsonLike ?? "";
+  s = s.replace(/\r/g, "");
+  s = s.replace(/\/\*[\s\S]*?\*\//g, "");
+  s = s.replace(/(^|\n)\s*\/\/.*(?=\n|$)/g, "\n");
+  s = s.replace(/[""]/g, '"').replace(/['']/g, "'");
+  s = s.replace(/,\s*(?=[}\]])/g, "");
+  s = s.replace(/```json\n?|```/g, "");
+  return s.trim();
+}
+
+function parseAiJsonResponse<T = any>(text: string): T | null {
+  try {
+    const block = extractJsonBlock(text);
+    if (!block) return null;
+    const cleaned = cleanJsonForParse(block);
+    return JSON.parse(cleaned) as T;
+  } catch (error) {
+    console.error('Failed to parse AI JSON:', error);
+    return null;
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -142,13 +189,9 @@ serve(async (req) => {
 
     // Parse the JSON response from Gemini
     const content = geminiData.candidates?.[0]?.content?.parts?.[0]?.text
-    let analysisResult
+    let analysisResult = parseAiJsonResponse(content);
     
-    try {
-      // Extract JSON from the response (Gemini might include markdown formatting)
-      const jsonMatch = content.match(/\{[\s\S]*\}/)
-      analysisResult = JSON.parse(jsonMatch ? jsonMatch[0] : content)
-    } catch (parseError) {
+    if (!analysisResult) {
       // Fallback: create structured response from text
       analysisResult = {
         product_name: "Product detected",

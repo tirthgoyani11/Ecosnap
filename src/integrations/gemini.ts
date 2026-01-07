@@ -15,6 +15,48 @@ interface GeminiAnalysis {
   alternatives: { product_name: string; reasoning: string; }[];
 }
 
+// Robust JSON extraction helpers to handle LLM responses
+function extractJsonBlock(text: string): string | null {
+  if (!text) return null;
+  // Try to extract fenced code block
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenceMatch && fenceMatch[1]) {
+    return fenceMatch[1];
+  }
+  // Fallback: find first { or [ to last } or ]
+  const firstCurly = text.indexOf("{");
+  const firstBracket = text.indexOf("[");
+  let start = -1;
+  if (firstCurly === -1 && firstBracket === -1) return null;
+  if (firstCurly === -1) start = firstBracket;
+  else if (firstBracket === -1) start = firstCurly;
+  else start = Math.min(firstCurly, firstBracket);
+  
+  const lastCurly = text.lastIndexOf("}");
+  const lastBracket = text.lastIndexOf("]");
+  const end = Math.max(lastCurly, lastBracket);
+  
+  if (start >= 0 && end > start) {
+    return text.slice(start, end + 1);
+  }
+  return null;
+}
+
+function cleanJsonForParse(jsonLike: string): string {
+  let s = jsonLike ?? "";
+  s = s.replace(/\r/g, "");
+  // Remove comments
+  s = s.replace(/\/\*[\s\S]*?\*\//g, "");
+  s = s.replace(/(^|\n)\s*\/\/.*(?=\n|$)/g, "\n");
+  // Replace fancy quotes
+  s = s.replace(/[""]/g, '"').replace(/['']/g, "'");
+  // Remove trailing commas
+  s = s.replace(/,\s*(?=[}\]])/g, "");
+  // Clean code fence remnants
+  s = s.replace(/```json\n?|```/g, "");
+  return s.trim();
+}
+
 export class Gemini {
   private static async makeApiCall(body: any): Promise<any> {
     const { geminiGenerate } = await import('@/lib/gemini-client');
@@ -30,11 +72,16 @@ export class Gemini {
 
   private static parseGeminiResponse(responseText: string): GeminiAnalysis | null {
     try {
-      const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/);
-      if (jsonMatch && jsonMatch[1]) {
-        return JSON.parse(jsonMatch[1]) as GeminiAnalysis;
+      const block = extractJsonBlock(responseText);
+      if (!block) {
+        console.error("No JSON block found in Gemini response");
+        console.error("Raw response text:", responseText);
+        return null;
       }
-      return JSON.parse(responseText) as GeminiAnalysis;
+      
+      const cleaned = cleanJsonForParse(block);
+      const parsed = JSON.parse(cleaned) as GeminiAnalysis;
+      return parsed;
     } catch (error) {
       console.error("Failed to parse Gemini JSON response:", error);
       console.error("Raw response text:", responseText);
