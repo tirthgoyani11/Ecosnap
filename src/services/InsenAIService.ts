@@ -77,13 +77,8 @@ export class InsenAIService {
         ]
       };
 
-      const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
+      const { geminiGenerate } = await import('@/lib/gemini-client');
+      const response = await geminiGenerate(requestBody);
 
       if (!response.ok) {
         throw new Error(`Gemini API error: ${response.status}`);
